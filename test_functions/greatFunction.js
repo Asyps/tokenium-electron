@@ -3,3 +3,4 @@ function funkce() {
     textEl.value = "Tlačítkový text"
     document.getElementById("div").appendChild(textEl)
 }
+

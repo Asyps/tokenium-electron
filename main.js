@@ -1,15 +1,21 @@
 const { app, BrowserWindow } = require('electron')
+const fs = require("fs")
 
-function createWindow() {
-    const win = new BrowserWindow({
-        width: 800, height: 600
+function createWindow(w, h, x, y, file) {
+    win = new BrowserWindow({
+        width: w,
+        height: h,
+        x: x,
+        y: y
     })
 
-    win.loadFile("index.html")
+    win.loadFile(file)
 }
 
 app.whenReady().then(() => {
-    createWindow()
+    window1 = createWindow(800, 600, 10, 10, "test_window_size/index.html")
+    window2 = createWindow(600, 800, 900, 700, "test_window_size/index.html")
+    
 })
 
 app.on("window-all-closed", () => {
