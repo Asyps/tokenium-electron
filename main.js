@@ -1,10 +1,10 @@
-const { app, BrowserWindow, ipcMain } = require('electron');
+const { app, BrowserWindow, ipcMain, MessageChannelMain } = require('electron');
 //const fs = require("fs")
 
 app.on("window-all-closed", () => {
     if (process.platform != "darwin") app.quit();
 });
-
+/*
 function createWindow(w, h, x, y, file) {
     win = new BrowserWindow({
         width: w,
@@ -24,8 +24,30 @@ app.whenReady().then(() => {
     window1 = createWindow(800, 600, 10, 10, "test_functions/index.html");
     window2 = createWindow(600, 800, 900, 700, "test_functions/susdex.html");
     
+    const {port1, port2} = new MessageChannelMain();
+    
+    window1.webContents.postMessage("port", "", [port1]);
+    window2.webContents.postMessage("port", "", [port2]);
 });
+*/
 
-ipcMain.on("from_index", (e) => {
-    window2.webContents.contents.postMessage("sus", "knedle", e.ports[0]);
+app.whenReady().then(() => {
+    win = new BrowserWindow({
+        width: 800,
+        height: 600,
+        x: 25,
+        y: 50,
+        frame: false
+    });
+
+    win.loadFile("test_window_size/index.html");
+
+    win2 = new BrowserWindow({
+        width: 800,
+        height: 600,
+        x: 25,
+        y: 50
+    });
+
+    win2.loadFile("test_window_size/index.html");
 });

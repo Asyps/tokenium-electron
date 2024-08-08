@@ -1,3 +1,7 @@
-const { contextBridge, ipcRenderer } = require("electron");
+const { ipcRenderer, contextBridge } = require("electron");
 
-contextBridge.exposeInMainWorld("ipcRenderer", ipcRenderer);
+
+ipcRenderer.on("port", (e) => {
+    port = e.ports[0];
+    window.postMessage("s", "*", transfer=[port]);
+});

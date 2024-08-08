@@ -1,17 +1,14 @@
-const ipcRenderer = window.ipcRenderer
+window.onmessage = (e) => {
+    window.port = e.ports[0]
 
-const output = document.getElementById("out");
-function gotMessage(event) {
-    output.innerHTML = event.data;
+    const output = document.getElementById("out");
+
+    window.port.onmessage = (e) => {
+        output.innerHTML = e.data;
+    }
 }
 
-ipcRenderer.on("sus", (e, msg) => {
-    global [indexPort] = e.ports;
-})
-
-indexPort.onmessage = gotMessage;
-
+// button
 function action() {
-    indexPort.postMessage("Úspěšně proběhl zprávsending");
+    window.port.postMessage("Úspěšně proběhl zprávsending");
 }
-
