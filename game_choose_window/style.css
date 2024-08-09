@@ -1,0 +1,30 @@
+#title {
+    margin: 50px;
+    text-align: center;
+    font-size: 45px;
+}
+
+#remove {
+    background-color: lightpink;
+}
+#create {
+    background-color: lightgreen;
+}
+#play {
+    background-color: lightskyblue;
+}
+
+input, select {
+    font-size: 30px;
+    width: 250px;
+}
+
+table {
+    margin-left: auto;
+    margin-right: auto;
+}
+
+td {
+    padding-left: 10px;
+    padding-right: 10px;
+}
