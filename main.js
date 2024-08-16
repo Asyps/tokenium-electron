@@ -1,3 +1,5 @@
+process.traceProcessWarnings = true
+
 const { app, BrowserWindow, ipcMain, MessageChannelMain } = require('electron');
 const fs = require("fs/promises")
 const path = require("path")
@@ -128,10 +130,38 @@ app.whenReady().then(() => {
 */
 
 ipcMain.handle("gameList", async () => await createGameList());
+ipcMain.handle("moduleList", async () => await createModuleList());
+
+ipcMain.handle("loadGame", (ev, modList) => {
+    // hide or destroy gameChooseWindow
+    console.log(modList);
+    for (i of modList) {
+        let moduleWindow = new BrowserWindow({
+            width: 800,
+            height: 600,
+            x: 25,
+            y: 50,
+            /*
+            webPreferences: {
+                preload: path.join(__dirname, "preload.js");
+            }
+            */
+        });
+
+        moduleWindow.loadFile(path.join(__dirname, "modules", i.name, "index.html"));
+
+        for (j of i.extensions) {
+            console.log("'extensions" + path.sep + j + ".js'") 
+            moduleWindow.webContents.executeJavaScript("let script = document.createElement('script'); script.src = 'extensions\\" + path.sep + j + ".js'; document.body.appendChild(script);");
+        }
+
+    }
+});
+
 
 
 app.whenReady().then(() => {
-    win = new BrowserWindow({
+    gameChooseWindow = new BrowserWindow({
         width: 800,
         height: 600,
         x: 25,
@@ -141,5 +171,5 @@ app.whenReady().then(() => {
         }
     });
 
-    win.loadFile(path.join(__dirname, "game_choose_window", "index.html"));
+    gameChooseWindow.loadFile(path.join(__dirname, "game_choose_window", "index.html"));
 });

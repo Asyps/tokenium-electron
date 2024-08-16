@@ -1,12 +1,9 @@
 async function setupGameList() {
-    list = await window.gameList();
-    console.log(list);
+    var list = await window.gameList();
 
-    let gameSelector = document.getElementById("game select");
+    var gameSelector = document.getElementById("game select");
     
     for (let i of list) {
-        console.log(i);
-
         let option = document.createElement("option");
         option.text = option.value = i;
         gameSelector.add(option);
@@ -14,3 +11,10 @@ async function setupGameList() {
 }
 
 setupGameList();
+
+async function test() {
+    window.system.loadGame(await window.moduleList());
+}
+
+test();
+
