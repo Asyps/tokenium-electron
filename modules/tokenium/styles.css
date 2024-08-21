@@ -1,0 +1,31 @@
+.tokenium_standard {
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    position: absolute;
+}
+
+#backgroundLayer {
+    z-index: -2; 
+}
+
+#gridLayer {
+    z-index: 0; 
+}
+
+.visualTokenLayer {
+    position: absolute;
+    overflow: visible;
+    z-index: 1; 
+}
+
+#rulerLayer {
+    z-index: 2;
+}
+
+.logicalTokenLayer {
+    position: absolute;
+    overflow: visible;
+    opacity: 0.5;
+    z-index: 3; 
+}

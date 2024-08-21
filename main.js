@@ -152,7 +152,7 @@ ipcMain.handle("loadGame", (ev, modList) => {
 
         for (j of i.extensions) {
             console.log("'extensions" + path.sep + j + ".js'") 
-            moduleWindow.webContents.executeJavaScript("let script = document.createElement('script'); script.src = 'extensions\\" + path.sep + j + ".js'; document.body.appendChild(script);");
+            moduleWindow.webContents.executeJavaScript("window.s = document.createElement('script'); window.s.src = 'extensions\\" + path.sep + j + ".js'; document.body.appendChild(window.s); delete window.s;");
         }
 
     }
