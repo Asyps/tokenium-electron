@@ -8,12 +8,36 @@ app.on("window-all-closed", () => {
     if (process.platform != "darwin") app.quit();
 });
 
+
+
 class moduleInfo {
     constructor(name, extensions) {
         this.name = name;
         this.extensions = extensions;
     }
 }
+
+// mockup, will later get the info from server/files/whatever
+let games = {
+    bang: [
+        new moduleInfo("tokenium", [])
+    ],
+    desert: [
+        new moduleInfo("tokenium", ["rulers", "startup"]),
+        new moduleInfo("chat", []),
+        new moduleInfo("calculator", [])
+    ],
+    uno: [
+        new moduleInfo("tokenium", []),
+        new moduleInfo("chat", [])
+    ]
+};
+
+
+
+
+// module system utilities
+
 
 async function createModuleList() {
     var moduleList = [];
@@ -101,6 +125,67 @@ async function createGameList() {
     return gameList;
 }
 
+async function getSelectedModules(gameName) {
+    return games[gameName];
+}
+
+// main menu handlers
+ipcMain.handle("getGameList", async () => await createGameList());
+ipcMain.handle("getModuleList", async () => await createModuleList());
+ipcMain.handle("getSelectedModules", async (ev, gameName) => await getSelectedModules(gameName));
+
+ipcMain.handle("loadGame", (ev, modList) => {
+    // hide or destroy mainMenu
+
+    console.log(modList);
+    for (i of modList) {
+        let moduleWindow = new BrowserWindow({
+            width: 800,
+            height: 600,
+            x: 25,
+            y: 50,
+            /*
+            webPreferences: {
+                preload: path.join(__dirname, "preload.js");
+            }
+            */
+        });
+
+        moduleWindow.loadFile(path.join(__dirname, "modules", i.name, "index.html"));
+
+        for (j of i.extensions) {
+            console.log("'extensions" + path.sep + j + ".js'") 
+            moduleWindow.webContents.executeJavaScript("window.s = document.createElement('script'); window.s.src = 'extensions\\" + path.sep + j + ".js'; document.body.appendChild(window.s); delete window.s;");
+        }
+
+    }
+});
+
+
+// main menu
+app.whenReady().then(() => {
+    mainMenu = new BrowserWindow({
+        width: 800,
+        height: 600,
+        x: 25,
+        y: 50,
+        webPreferences: {
+            preload: path.join(__dirname, "main_menu", "preload.js")
+        }
+    });
+
+    mainMenu.loadFile(path.join(__dirname, "main_menu", "index.html"));
+
+    mainMenu.webContents.setWindowOpenHandler(() => {
+
+    });
+});
+
+
+
+
+
+
 
 /*
 function createWindow(w, h, x, y, file) {
@@ -128,48 +213,3 @@ app.whenReady().then(() => {
     window2.webContents.postMessage("port", "", [port2]);
 });
 */
-
-ipcMain.handle("gameList", async () => await createGameList());
-ipcMain.handle("moduleList", async () => await createModuleList());
-
-ipcMain.handle("loadGame", (ev, modList) => {
-    // hide or destroy gameChooseWindow
-    console.log(modList);
-    for (i of modList) {
-        let moduleWindow = new BrowserWindow({
-            width: 800,
-            height: 600,
-            x: 25,
-            y: 50,
-            /*
-            webPreferences: {
-                preload: path.join(__dirname, "preload.js");
-            }
-            */
-        });
-
-        moduleWindow.loadFile(path.join(__dirname, "modules", i.name, "index.html"));
-
-        for (j of i.extensions) {
-            console.log("'extensions" + path.sep + j + ".js'") 
-            moduleWindow.webContents.executeJavaScript("window.s = document.createElement('script'); window.s.src = 'extensions\\" + path.sep + j + ".js'; document.body.appendChild(window.s); delete window.s;");
-        }
-
-    }
-});
-
-
-
-app.whenReady().then(() => {
-    gameChooseWindow = new BrowserWindow({
-        width: 800,
-        height: 600,
-        x: 25,
-        y: 50,
-        webPreferences: {
-            preload: path.join(__dirname, "game_choose_window", "preload.js")
-        }
-    });
-
-    gameChooseWindow.loadFile(path.join(__dirname, "game_choose_window", "index.html"));
-});
