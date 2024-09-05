@@ -1,0 +1,97 @@
+<!-- Generated using ChatGPT -->
+<!-- This file is not used in the program directly; this is the reference format of checklists used to aid the generateOptions() function in script.js -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Two-Tiered Checkbox List</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="checkbox-list">
+        <div class="main-option-group">
+            <input type="checkbox" id="option1" class="main-option" data-text="Main Option 1">
+            <div class="sub-options-group">
+                <input type="checkbox" id="suboption1-1" class="sub-option" data-text="Sub Option 1.1" disabled>
+                <input type="checkbox" id="suboption1-2" class="sub-option" data-text="Sub Option 1.2" disabled>
+            </div>
+        </div>
+
+        <div class="main-option-group">
+            <input type="checkbox" id="option2" class="main-option" data-text="Main Option 2">
+            <div class="sub-options-group">
+                <input type="checkbox" id="suboption2-1" class="sub-option" data-text="Sub Option 2.1" disabled>
+            </div>
+        </div>
+
+        <div class="main-option-group">
+            <input type="checkbox" id="option3" class="main-option" data-text="Main Option 3">
+        </div>
+
+        <button id="confirmButton">Confirm</button>
+    </div>
+
+    <script>
+        // Define the moduleInfo class
+        class moduleInfo {
+            constructor(name, extensions) {
+                this.name = name;
+                this.extensions = extensions;
+            }
+        }
+    
+        // Display the text from data-text attribute dynamically
+        document.querySelectorAll('.main-option, .sub-option').forEach(option => {
+            let text = option.getAttribute('data-text');
+            option.insertAdjacentText('afterend', text);
+        });
+    
+        // Add event listeners to all main options
+        document.querySelectorAll('.main-option').forEach(mainOption => {
+            mainOption.addEventListener('change', function() {
+                let subOptions = this.closest('.main-option-group').querySelectorAll('.sub-option');
+                if (this.checked) {
+                    subOptions.forEach(subOption => {
+                        subOption.disabled = false; // Enable sub-options
+                    });
+                } else {
+                    subOptions.forEach(subOption => {
+                        subOption.checked = false;  // Uncheck sub-options
+                        subOption.disabled = true;  // Disable sub-options
+                    });
+                }
+            });
+        });
+    
+        // Confirm button event listener
+        document.getElementById("confirmButton").addEventListener("click", function() {
+            let modules = [];
+    
+            // Iterate over all main options
+            document.querySelectorAll('.main-option').forEach(mainOption => {
+                if (mainOption.checked) {
+                    let moduleName = mainOption.getAttribute('data-text');
+                    let subOptions = mainOption.closest('.main-option-group').querySelectorAll('.sub-option');
+                    let extensions = [];
+    
+                    // Collect checked sub-options (extensions)
+                    subOptions.forEach(subOption => {
+                        if (subOption.checked) {
+                            extensions.push(subOption.getAttribute('data-text'));
+                        }
+                    });
+    
+                    // Create new moduleInfo object and push it to the modules array
+                    modules.push(new moduleInfo(moduleName, extensions));
+                }
+            });
+    
+            // Output the result
+            console.log(modules);
+        });
+    </script>
+    
+</body>
+</html>

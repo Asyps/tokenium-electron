@@ -2,18 +2,14 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=, initial-scale=1.0">
-    <link rel="stylesheet" href="style.css">
-    <title>Module select</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Module selector</title>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div id="header"></div>
-    <form id="module form">
-        <div id="module options">
-
-        </div>
-        <input type="button" value="Confirm selection" onclick="confirmSelection()">
-    </form>
+    <h1>Select modules</h1>
+    <div id="checkbox-list" class="checkbox-list"></div>
+    <button id="confirmButton" onclick="confirmSelection()">Confirm</button>
     <script src="script.js"></script>
 </body>
 </html>

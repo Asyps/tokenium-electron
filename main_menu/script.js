@@ -1,33 +1,28 @@
-async function setupGameList() {
-    var list = await window.gameList();
+let gameDropdown = document.getElementById("select game");
 
-    var gameSelector = document.getElementById("select game");
+// startup
+async function setupGameDropdown() {
+    var gameList = await window.getGameList();
     
-    for (let i of list) {
+    for (let i of gameList) {
         let option = document.createElement("option");
         option.text = option.value = i;
-        gameSelector.add(option);
+        gameDropdown.add(option);
     }
 }
 
-setupGameList();
+setupGameDropdown();
 
 
 
+
+// edit modules button
 function openModuleSelector() {
-
+    moduleSelector = window.open("../module_selector/index.html");
+    moduleSelector.window.gameName = gameDropdown.value;
 }
 
 
-async function generateOptions() {
-    var moduleList = await window.moduleList();
-    var selectedModules = await window.selectedModules("bang");
-
-    console.log(moduleList)
-    console.log(selectedModules)
-}
-
-generateOptions();
 
 
 

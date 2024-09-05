@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="styles.css">
     <title>Main Menu</title>
 </head>
 <body>
@@ -13,7 +13,7 @@
             <tr>
                 <td>
                     <select id="select game">
-                        <option>Select Game</option>
+                        <option value="-">Select Game</option>
                     </select>
                 </td>
                 <td>
@@ -25,7 +25,7 @@
                     <input type="button" id="create" value="Create new game">
                 </td>
                 <td>
-                    <input type="button" id="change" value="Change modules">
+                    <input type="button" id="change" value="Change modules" onclick="openModuleSelector()">
                 </td>
             </tr>
             <tr>

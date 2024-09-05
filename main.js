@@ -23,7 +23,7 @@ let games = {
         new moduleInfo("tokenium", [])
     ],
     desert: [
-        new moduleInfo("tokenium", ["rulers", "startup"]),
+        new moduleInfo("tokenium", ["startup"]),
         new moduleInfo("chat", []),
         new moduleInfo("calculator", [])
     ],
@@ -37,8 +37,6 @@ let games = {
 
 
 // module system utilities
-
-
 async function createModuleList() {
     var moduleList = [];
 
@@ -125,14 +123,12 @@ async function createGameList() {
     return gameList;
 }
 
-async function getSelectedModules(gameName) {
-    return games[gameName];
-}
 
 // main menu handlers
 ipcMain.handle("getGameList", async () => await createGameList());
 ipcMain.handle("getModuleList", async () => await createModuleList());
-ipcMain.handle("getSelectedModules", async (ev, gameName) => await getSelectedModules(gameName));
+ipcMain.handle("getSelectedModules", (ev, gameName) => games[gameName]);
+ipcMain.handle("setSelectedModules", (ev, gameName, moduleList) => games[gameName] = moduleList);
 
 ipcMain.handle("loadGame", (ev, modList) => {
     // hide or destroy mainMenu
@@ -177,7 +173,23 @@ app.whenReady().then(() => {
     mainMenu.loadFile(path.join(__dirname, "main_menu", "index.html"));
 
     mainMenu.webContents.setWindowOpenHandler(() => {
+        return {
+            action: "allow",
+            overrideBrowserWindowOptions: {
+                width: 400,
+                height: 500,
 
+                frame: false,
+                resizable: false,
+                
+                modal: true,
+                parent: mainMenu,
+
+                webPreferences: {
+                    preload: path.join(__dirname, "module_selector", "preload.js")
+                }
+            }
+        }
     });
 });
 
