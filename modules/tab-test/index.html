@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tabbed Interface</title>
+    <link rel="stylesheet" href="tabs.css">
+</head>
+<body>
+    <div class="tab-container">
+        <div class="tab-buttons">
+            <button class="tab-button active" onclick="openTab('tab1')">Tab 1</button>
+            <button class="tab-button" onclick="openTab('tab2')">Tab 2</button>
+        </div>
+        <div class="tab-content" id="tab1">
+            <h2>Content for Tab 1</h2>
+            <p>This is the content for Tab 1.</p>
+        </div>
+        <div class="tab-content" id="tab2" style="display:none;">
+            <h2>Content for Tab 2</h2>
+            <p>This is the content for Tab 2.</p>
+        </div>
+    </div>
+
+    <script>
+        function openTab(tabId) {
+            // Hide all tab content
+            const tabContents = document.querySelectorAll('.tab-content');
+            tabContents.forEach(content => content.style.display = 'none');
+
+            // Remove active class from all tab buttons
+            const tabButtons = document.querySelectorAll('.tab-button');
+            tabButtons.forEach(button => button.classList.remove('active'));
+
+            // Show the selected tab content
+            document.getElementById(tabId).style.display = 'block';
+
+            // Add active class to the clicked tab button
+            document.querySelector(`.tab-button[onclick="openTab('${tabId}')"]`).classList.add('active');
+        }
+    </script>
+</body>
+</html>
