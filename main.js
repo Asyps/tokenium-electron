@@ -1,15 +1,56 @@
+// Debug
 process.traceProcessWarnings = true
 
+// Imports
 const { app, BrowserWindow, ipcMain, MessageChannelMain } = require('electron');
-const fs = require("fs/promises")
-const path = require("path")
+const fs = require("fs/promises");
+const path = require("path");
 
+// Close the application when all windows are closed
 app.on("window-all-closed", () => {
     if (process.platform != "darwin") app.quit();
 });
 
+// Main menu
+app.whenReady().then(() => {
+    // Open the main menu
+    mainMenu = new BrowserWindow({
+        // To do - security stuff
+        width: 800,
+        height: 600,
+        x: 25,
+        y: 50,
+        webPreferences: {
+            preload: path.join(__dirname, "main_menu", "preload.js")
+        }
+    });
 
+    mainMenu.loadFile(path.join(__dirname, "main_menu", "index.html"));
 
+    // Handler for the module selector window
+    mainMenu.webContents.setWindowOpenHandler(() => {
+        // To do - security stuff
+        return {
+            action: "allow",
+            overrideBrowserWindowOptions: {
+                width: 400,
+                height: 500,
+
+                frame: true,
+                resizable: true,
+                
+                modal: true,
+                parent: mainMenu,
+
+                webPreferences: {
+                    preload: path.join(__dirname, "module_selector", "preload.js")
+                }
+            }
+        }
+    });
+});
+
+// Class for handling modules
 class moduleInfo {
     constructor(name, extensions) {
         this.name = name;
@@ -17,7 +58,7 @@ class moduleInfo {
     }
 }
 
-// mockup, will later get the info from server/files/whatever
+// Mockup, will later get the info from server/files/whatever
 let games = {
     bang: [
         new moduleInfo("tokenium", [])
@@ -36,7 +77,7 @@ let games = {
 
 
 
-// module system utilities
+// Functions for reading available modules and games
 async function createModuleList() {
     var moduleList = [];
 
@@ -123,19 +164,23 @@ async function createGameList() {
     return gameList;
 }
 
-
-// main menu handlers
+// Main menu handlers
 ipcMain.handle("getGameList", async () => await createGameList());
 ipcMain.handle("getModuleList", async () => await createModuleList());
 ipcMain.handle("getSelectedModules", (ev, gameName) => games[gameName]);
 ipcMain.handle("setSelectedModules", (ev, gameName, moduleList) => games[gameName] = moduleList);
 
-ipcMain.handle("loadGame", (ev, modList) => {
-    // hide or destroy mainMenu
+ipcMain.handle("loadGame", (ev, gameName) => {
+    // Close main menu
+    mainMenu.close();
 
-    console.log(modList);
+    // Get the list of modules to load
+    modList = games[gameName];
+
     for (i of modList) {
+        // Create the module window
         let moduleWindow = new BrowserWindow({
+            // To-do security stuff
             width: 800,
             height: 600,
             x: 25,
@@ -149,8 +194,8 @@ ipcMain.handle("loadGame", (ev, modList) => {
 
         moduleWindow.loadFile(path.join(__dirname, "modules", i.name, "index.html"));
 
+        // Add extensions
         for (j of i.extensions) {
-            console.log("'extensions" + path.sep + j + ".js'") 
             moduleWindow.webContents.executeJavaScript("window.s = document.createElement('script'); window.s.src = 'extensions\\" + path.sep + j + ".js'; document.body.appendChild(window.s); delete window.s;");
         }
 
@@ -158,40 +203,7 @@ ipcMain.handle("loadGame", (ev, modList) => {
 });
 
 
-// main menu
-app.whenReady().then(() => {
-    mainMenu = new BrowserWindow({
-        width: 800,
-        height: 600,
-        x: 25,
-        y: 50,
-        webPreferences: {
-            preload: path.join(__dirname, "main_menu", "preload.js")
-        }
-    });
 
-    mainMenu.loadFile(path.join(__dirname, "main_menu", "index.html"));
-
-    mainMenu.webContents.setWindowOpenHandler(() => {
-        return {
-            action: "allow",
-            overrideBrowserWindowOptions: {
-                width: 400,
-                height: 500,
-
-                frame: false,
-                resizable: false,
-                
-                modal: true,
-                parent: mainMenu,
-
-                webPreferences: {
-                    preload: path.join(__dirname, "module_selector", "preload.js")
-                }
-            }
-        }
-    });
-});
 
 
 

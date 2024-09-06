@@ -1,8 +1,10 @@
+// Imports
 const { ipcRenderer, contextBridge } = require("electron");
 
+// Expose a function to access game list
 contextBridge.exposeInMainWorld("getGameList",  async () => await ipcRenderer.invoke("getGameList"));
 
+// Expose a function that starts the game
 contextBridge.exposeInMainWorld("system", {
-    loadGame: (moduleList) => ipcRenderer.invoke("loadGame", moduleList),
-    //editModules: (gameName) => ipcRenderer.invoke("loadGame", moduleList),
+    loadGame: (gameName) => ipcRenderer.invoke("loadGame", gameName),
 });

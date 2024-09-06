@@ -1,9 +1,11 @@
 let gameDropdown = document.getElementById("select game");
 
-// startup
+// Startup
 async function setupGameDropdown() {
+    // Get the list of existing games
     var gameList = await window.getGameList();
     
+    // Add each one to the dropdown
     for (let i of gameList) {
         let option = document.createElement("option");
         option.text = option.value = i;
@@ -13,12 +15,14 @@ async function setupGameDropdown() {
 
 setupGameDropdown();
 
+// Play button
+function start() {
+    window.system.loadGame(gameDropdown.value);
+}
 
-
-
-// edit modules button
+// Change modules button
 function openModuleSelector() {
-    moduleSelector = window.open("../module_selector/index.html");
+    let moduleSelector = window.open("../module_selector/index.html");
     moduleSelector.window.gameName = gameDropdown.value;
 }
 
