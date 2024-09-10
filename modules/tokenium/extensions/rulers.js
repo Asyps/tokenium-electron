@@ -26,7 +26,10 @@ class Arrow {
 c = document.createElement("canvas");
 c.id = "rulerLayer";
 c.setAttribute("class", "tokenium_standard");
-tokenium.meta.container.appendChild(c);
+/*
+    <canvas id="rulerLayer" class="tokenium_standard"></canvas>
+*/
+tokenium.meta.container.insertBefore(c, tokenium.tokens.logicalContainer);
 
 // ruler data and functions
 tokenium.ruler = {

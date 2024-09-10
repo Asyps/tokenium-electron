@@ -1,55 +1,103 @@
-// Example JavaScript to add chat components
-
-// Function to add a system message
-function addSystemMessage(text) {
-    const message = document.createElement('div');
-    message.className = 'system-message';
-    message.textContent = text;
-    document.getElementById('playerChatMessages').appendChild(message);
+// Mockup - will be replaced by server
+class chatComponent {
+    constructor(type, data) {
+        this.type = type,
+        this.data = data
+    }
 }
 
-// Function to add a user header
-function addUserHeader(userName, userImage) {
-    const header = document.createElement('div');
-    header.className = 'user-header';
+// testing
+let messages = [
+    new chatComponent("system", "Chat welcomes you!"),
+    new chatComponent("header", "Fred"),
+    new chatComponent("message", "Hi guys!"),
+    new chatComponent("header", "Steve"),
+    new chatComponent("message", "Hello Frederick!"),
+    new chatComponent("header", "Anna"),
+    new chatComponent("message", "Hi!"),
+    new chatComponent("system", "Chat shuts down!"),
+]
 
-    const img = document.createElement('img');
-    img.src = userImage;
-    img.alt = userName;
-    img.className = 'user-image';
+let pfpDictionary = {
+    "Dave": "../../images/Dave.png",
+    "Fred": "../../images/placeholder_1.png",
+    "Anna": "../../images/placeholder_2.png",
+    "Steve": "../../images/placeholder_3.png"
+}
+let localPlayerName = "Dave"
+// end of mockup (hopefully)
 
-    const name = document.createElement('span');
-    name.className = 'user-name';
-    name.textContent = userName;
+const playerChat = {
+    lastMessageSender: "",
+    internal: {
+        textInput: document.getElementById("playerChatInput"),
+        messageArea: document.getElementById("playerChatMessages"),
+        
+        addSystemMessage(text) {
+            const message = document.createElement('div');
+            message.className = 'system-message';
+            message.textContent = text;
+            this.messageArea.appendChild(message);
+        },
 
-    header.appendChild(img);
-    header.appendChild(name);
+        addUserHeader(userName) {
+            const header = document.createElement('div');
+            header.className = 'user-header';
 
-    document.getElementById('playerChatMessages').appendChild(header);
+            const img = document.createElement('img');
+            img.src = pfpDictionary[userName];
+            img.alt = userName;
+            img.className = 'user-image';
+
+            const name = document.createElement('span');
+            name.className = 'user-name';
+            name.textContent = userName;
+
+            header.appendChild(img);
+            header.appendChild(name);
+
+            this.messageArea.appendChild(header);
+        },
+
+        addUserMessage(text) {
+            const message = document.createElement('div');
+            message.className = 'user-message';
+            message.textContent = text;
+            this.messageArea.appendChild(message);
+        },
+
+        addChatComponent(component) {
+            if (component.type == "system") {
+                this.addSystemMessage(component.data);
+                playerChat.lastMessageSender = "";
+            }
+            else if (component.type == "header") {
+                this.addUserHeader(component.data);
+                playerChat.lastMessageSender = component.data;
+            }
+            else {
+                this.addUserMessage(component.data);
+            }
+        }
+    },
+
+    send() {
+        if (this.lastMessageSender != localPlayerName) {
+            playerChat.internal.addUserHeader(localPlayerName);
+        }
+
+        this.internal.addUserMessage(this.internal.textInput.value);
+        this.internal.textInput.value = "";
+
+        this.lastMessageSender = localPlayerName;
+    },
+
+    sendSystemMessage(text) {
+        this.internal.addSystemMessage(text);
+        this.lastMessageSender = "";
+    },
 }
 
-// Function to add a user message
-function addUserMessage(text) {
-    const message = document.createElement('div');
-    message.className = 'user-message';
-    message.textContent = text;
-    document.getElementById('playerChatMessages').appendChild(message);
+for (i of messages) {
+    playerChat.internal.addChatComponent(i);
 }
-
-// Example usage:
-addSystemMessage("Welcome to the chat!");
-addUserHeader("Alice", "../tokenium/images/Dave.png");
-addUserMessage("Hi there!");
-addUserMessage("How are you?");
-addUserHeader("Bob", "../tokenium/images/Dave.png");
-addUserMessage("I'm good, thanks!");
-addSystemMessage("Server will shut up!");
-addUserHeader("Bob", "../tokenium/images/Dave.png");
-addUserMessage("Noooooooooooo!");
-addSystemMessage("Welcome to the chat!");
-addUserHeader("Alice", "../tokenium/images/Dave.png");
-addUserMessage("Hi there!");
-addUserMessage("How are you?");
-addUserHeader("Bob", "../tokenium/images/Dave.png");
-addUserMessage("I'm good, thanks!");
-addSystemMessage("Server will shut up!");
