@@ -18,7 +18,7 @@ let chatTabDiv = document.createElement("div");
 chatTabDiv.id = "inWorldChat";
 chatTabDiv.setAttribute("class", "tab-content");
 chatTabDiv.style = "display:none;"
-chatTabDiv.innerHTML = '<div class="chat-container"><div class="chat-messages" id="inWorldChatMessages"></div></div><div class="chat-input-container"><textarea id="inWorldChatInput" class="chat-input" placeholder="Type your message..."></textarea><div class="dropdown-and-button"><select id="characterSelect" class="character-select"><option value="character1">Character 1</option><option value="character2">Character 2</option><option value="character3">Character 3</option></select><button id="inWorldSendButton" class="send-button">Send</button></div></div>'
+chatTabDiv.innerHTML = '<div class="chat-container"><div class="chat-messages" id="inWorldChatMessages"></div></div><div class="chat-input-container"><textarea id="inWorldChatInput" class="chat-input" placeholder="Type your message..."></textarea><div class="dropdown-and-button"><select id="characterSelect" class="character-select"><option value="character1">Character 1</option><option value="character2">Character 2</option><option value="Fred">Fred</option></select><button class="send-button" onclick="inWorldChat.send()">Send</button></div></div>'
 /*
     <div class="tab-content" id="inWorldChat" style="display:none;"">
         <div class="chat-container">
@@ -30,9 +30,9 @@ chatTabDiv.innerHTML = '<div class="chat-container"><div class="chat-messages" i
                 <select id="characterSelect" class="character-select">
                     <option value="character1">Character 1</option>
                     <option value="character2">Character 2</option>
-                    <option value="character3">Character 3</option>
+                    <option value="Fred">Fred</option>
                 </select>
-                <button id="inWorldSendButton" class="send-button">Send</button>
+                <button class="send-button" onclick="inWorldChat.send()">Send</button>
             </div>
         </div>
     </div>
@@ -59,35 +59,34 @@ function openTab(tabId) {
 }
 
 
-
-
-
-// edit to fit the needs of in game chat
-const playerChat = {
+const inWorldChat = {
     lastMessageSender: "",
+    messages: [],
+
     internal: {
-        textInput: document.getElementById("playerChatInput"),
-        messageArea: document.getElementById("playerChatMessages"),
+        textInput: document.getElementById("inWorldChatInput"),
+        characterInput: document.getElementById("characterSelect"),
+        messageArea: document.getElementById("inWorldChatMessages"),
         
-        addSystemMessage(text) {
+        displaySystemMessage(text) {
             const message = document.createElement('div');
             message.className = 'system-message';
             message.textContent = text;
             this.messageArea.appendChild(message);
         },
 
-        addUserHeader(userName) {
+        displayCharacterHeader(characterName) {
             const header = document.createElement('div');
             header.className = 'user-header';
 
             const img = document.createElement('img');
-            img.src = pfpDictionary[userName];
-            img.alt = userName;
+            img.src = pfpDictionary[characterName];
+            img.alt = characterName;
             img.className = 'user-image';
 
             const name = document.createElement('span');
             name.className = 'user-name';
-            name.textContent = userName;
+            name.textContent = characterName;
 
             header.appendChild(img);
             header.appendChild(name);
@@ -95,7 +94,7 @@ const playerChat = {
             this.messageArea.appendChild(header);
         },
 
-        addUserMessage(text) {
+        displayCharacterMessage(text) {
             const message = document.createElement('div');
             message.className = 'user-message';
             message.textContent = text;
@@ -104,32 +103,61 @@ const playerChat = {
 
         addChatComponent(component) {
             if (component.type == "system") {
-                this.addSystemMessage(component.data);
+                this.displaySystemMessage(component.data);
                 playerChat.lastMessageSender = "";
             }
             else if (component.type == "header") {
-                this.addUserHeader(component.data);
+                this.displayCharacterHeader(component.data);
                 playerChat.lastMessageSender = component.data;
             }
             else {
-                this.addUserMessage(component.data);
+                this.displayCharacterMessage(component.data);
             }
         }
     },
 
     send() {
-        if (this.lastMessageSender != localPlayerName) {
-            playerChat.internal.addUserHeader(localPlayerName);
+        let selectedCharacter = this.internal.characterInput.value
+        
+        if (this.lastMessageSender != selectedCharacter) {
+            this.internal.displayCharacterHeader(selectedCharacter);
+            this.messages.push(new chatComponent("header", selectedCharacter));
         }
 
-        this.internal.addUserMessage(this.internal.textInput.value);
-        this.internal.textInput.value = "";
+        this.internal.displayCharacterMessage(this.internal.textInput.value);
+        this.messages.push(new chatComponent("message", this.internal.textInput.value));
 
-        this.lastMessageSender = localPlayerName;
+        this.internal.textInput.value = "";
+        this.lastMessageSender = selectedCharacter;
     },
 
     sendSystemMessage(text) {
-        this.internal.addSystemMessage(text);
+        this.internal.displaySystemMessage(text);
+        this.messages.push(new chatComponent("system", text));
+
         this.lastMessageSender = "";
     },
+
+    addCharacter(name) {
+        character = document.createElement("option");
+        character.value = character.innerHTML = character.id = name;
+        this.internal.characterInput.add(character);
+    }
+}
+
+
+
+inWorldChat.addCharacter("Bertha");
+
+for (i of [
+        new chatComponent("system", "Chat exists!"),
+        new chatComponent("header", "Greg"),
+        new chatComponent("message", "Hi guys!"),
+        new chatComponent("header", "Bob"),
+        new chatComponent("message", "Hello Gregerick!"),
+        new chatComponent("header", "Alice"),
+        new chatComponent("message", "Ah this guy again."),
+        new chatComponent("system", "Chat shuts up!"),
+    ]) {
+    inWorldChat.internal.addChatComponent(i);
 }

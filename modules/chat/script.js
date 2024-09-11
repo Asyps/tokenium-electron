@@ -6,18 +6,6 @@ class chatComponent {
     }
 }
 
-// testing
-let messages = [
-    new chatComponent("system", "Chat welcomes you!"),
-    new chatComponent("header", "Fred"),
-    new chatComponent("message", "Hi guys!"),
-    new chatComponent("header", "Steve"),
-    new chatComponent("message", "Hello Frederick!"),
-    new chatComponent("header", "Anna"),
-    new chatComponent("message", "Hi!"),
-    new chatComponent("system", "Chat shuts down!"),
-]
-
 let pfpDictionary = {
     "Dave": "../../images/Dave.png",
     "Fred": "../../images/placeholder_1.png",
@@ -29,18 +17,20 @@ let localPlayerName = "Dave"
 
 const playerChat = {
     lastMessageSender: "",
+    messages: [],
+
     internal: {
         textInput: document.getElementById("playerChatInput"),
         messageArea: document.getElementById("playerChatMessages"),
         
-        addSystemMessage(text) {
+        displaySystemMessage(text) {
             const message = document.createElement('div');
             message.className = 'system-message';
             message.textContent = text;
             this.messageArea.appendChild(message);
         },
 
-        addUserHeader(userName) {
+        displayUserHeader(userName) {
             const header = document.createElement('div');
             header.className = 'user-header';
 
@@ -59,45 +49,58 @@ const playerChat = {
             this.messageArea.appendChild(header);
         },
 
-        addUserMessage(text) {
+        displayUserMessage(text) {
             const message = document.createElement('div');
             message.className = 'user-message';
             message.textContent = text;
             this.messageArea.appendChild(message);
         },
 
-        addChatComponent(component) {
+        displayChatComponent(component) {
             if (component.type == "system") {
-                this.addSystemMessage(component.data);
+                this.displaySystemMessage(component.data);
                 playerChat.lastMessageSender = "";
             }
             else if (component.type == "header") {
-                this.addUserHeader(component.data);
+                this.displayUserHeader(component.data);
                 playerChat.lastMessageSender = component.data;
             }
             else {
-                this.addUserMessage(component.data);
+                this.displayUserMessage(component.data);
             }
         }
     },
 
     send() {
         if (this.lastMessageSender != localPlayerName) {
-            playerChat.internal.addUserHeader(localPlayerName);
+            playerChat.internal.displayUserHeader(localPlayerName);
+            playerChat.messages.push(new chatComponent("header", localPlayerName));
         }
 
-        this.internal.addUserMessage(this.internal.textInput.value);
-        this.internal.textInput.value = "";
+        this.internal.displayUserMessage(this.internal.textInput.value);
+        playerChat.messages.push(new chatComponent("message", this.internal.textInput.value));
 
+        this.internal.textInput.value = "";
         this.lastMessageSender = localPlayerName;
     },
 
     sendSystemMessage(text) {
-        this.internal.addSystemMessage(text);
+        this.internal.displaySystemMessage(text);
+        this.messages.push(new chatComponent("system", text));
+
         this.lastMessageSender = "";
     },
 }
 
-for (i of messages) {
-    playerChat.internal.addChatComponent(i);
+for (i of [
+    new chatComponent("system", "Chat welcomes you!"),
+    new chatComponent("header", "Fred"),
+    new chatComponent("message", "Hi guys!"),
+    new chatComponent("header", "Steve"),
+    new chatComponent("message", "Hello Frederick!"),
+    new chatComponent("header", "Anna"),
+    new chatComponent("message", "Hi!"),
+    new chatComponent("system", "Chat shuts down!"),
+]) {
+    playerChat.internal.displayChatComponent(i);
 }
