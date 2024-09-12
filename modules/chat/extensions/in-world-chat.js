@@ -61,7 +61,16 @@ function openTab(tabId) {
 
 const inWorldChat = {
     lastMessageSender: "",
-    messages: [],
+    messages: [
+        new chatComponent("system", "Chat exists!"),
+        new chatComponent("header", "Greg"),
+        new chatComponent("message", "Hi guys!"),
+        new chatComponent("header", "Bob"),
+        new chatComponent("message", "Hello Gregerick!"),
+        new chatComponent("header", "Alice"),
+        new chatComponent("message", "Ah this guy again."),
+        new chatComponent("system", "Chat shuts up!"),
+    ],
 
     internal: {
         textInput: document.getElementById("inWorldChatInput"),
@@ -149,15 +158,6 @@ const inWorldChat = {
 
 inWorldChat.addCharacter("Bertha");
 
-for (i of [
-        new chatComponent("system", "Chat exists!"),
-        new chatComponent("header", "Greg"),
-        new chatComponent("message", "Hi guys!"),
-        new chatComponent("header", "Bob"),
-        new chatComponent("message", "Hello Gregerick!"),
-        new chatComponent("header", "Alice"),
-        new chatComponent("message", "Ah this guy again."),
-        new chatComponent("system", "Chat shuts up!"),
-    ]) {
+for (i of inWorldChat.messages) {
     inWorldChat.internal.addChatComponent(i);
 }

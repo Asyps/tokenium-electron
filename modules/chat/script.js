@@ -17,7 +17,16 @@ let localPlayerName = "Dave"
 
 const playerChat = {
     lastMessageSender: "",
-    messages: [],
+    messages: [
+        new chatComponent("system", "Chat welcomes you!"),
+        new chatComponent("header", "Fred"),
+        new chatComponent("message", "Hi guys!"),
+        new chatComponent("header", "Steve"),
+        new chatComponent("message", "Hello Frederick!"),
+        new chatComponent("header", "Anna"),
+        new chatComponent("message", "Hi!"),
+        new chatComponent("system", "Chat shuts down!"),
+    ],
 
     internal: {
         textInput: document.getElementById("playerChatInput"),
@@ -92,15 +101,6 @@ const playerChat = {
     },
 }
 
-for (i of [
-    new chatComponent("system", "Chat welcomes you!"),
-    new chatComponent("header", "Fred"),
-    new chatComponent("message", "Hi guys!"),
-    new chatComponent("header", "Steve"),
-    new chatComponent("message", "Hello Frederick!"),
-    new chatComponent("header", "Anna"),
-    new chatComponent("message", "Hi!"),
-    new chatComponent("system", "Chat shuts down!"),
-]) {
+for (i of playerChat.messages) {
     playerChat.internal.displayChatComponent(i);
 }

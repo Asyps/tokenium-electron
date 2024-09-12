@@ -164,6 +164,36 @@ async function createGameList() {
     return gameList;
 }
 
+// Functions to obtain lists of existing image files etc.
+async function createProfilePictureList() {
+    let profilePictureList = [];
+
+    // Open the profile picture directory
+    try {
+        var pfpDir = await fs.opendir(path.join(__dirname, "profile_pics"));
+    } catch {
+        // If it doesn't exist, create it and return empty pfp list
+        fs.mkdir(path.join(__dirname, "profile_pics"));
+        return profilePictureList;
+    }
+
+    // Iterate over entries
+    for await (const pfpDirent of pfpDir) {
+
+        // Check if entry is a directory, if not, throw error
+        if (pfpDirent.isFile()) {
+            profilePictureList.push(pfpDirent.name);
+        }
+        else {
+            throw new Error("The folder 'profile_pics' should contain only ().");
+        }
+    }
+
+    console.log(profilePictureList);
+}
+
+createProfilePictureList()
+
 // Main menu handlers
 ipcMain.handle("getGameList", async () => await createGameList());
 ipcMain.handle("getModuleList", async () => await createModuleList());
