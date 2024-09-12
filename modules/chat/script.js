@@ -6,11 +6,12 @@ class chatComponent {
     }
 }
 
+// will not be needed, will generate file name from player name
 let pfpDictionary = {
-    "Dave": "../../images/Dave.png",
-    "Fred": "../../images/placeholder_1.png",
-    "Anna": "../../images/placeholder_2.png",
-    "Steve": "../../images/placeholder_3.png"
+    "Dave": "../../profile_pics/Dave.png",
+    "Fred": "../../profile_pics/placeholder_1.png",
+    "Anna": "../../profile_pics/placeholder_2.png",
+    "Steve": "../../profile_pics/placeholder_3.png"
 }
 let localPlayerName = "Dave"
 // end of mockup (hopefully)

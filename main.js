@@ -189,10 +189,22 @@ async function createProfilePictureList() {
         }
     }
 
-    console.log(profilePictureList);
+    return profilePictureList;
 }
 
-createProfilePictureList()
+async function createImageList(gameName) {
+    let imageList = [];
+
+    // Open the profile picture directory
+    try {
+        var imagesDir = await fs.opendir(path.join(__dirname, "games", gameName, "images"));
+    } catch {
+        // If it doesn't exist, create it and return empty pfp list
+        fs.mkdir(path.join(__dirname, "games", gameName, "images"));
+        return imageList;
+    }
+}
+
 
 // Main menu handlers
 ipcMain.handle("getGameList", async () => await createGameList());
