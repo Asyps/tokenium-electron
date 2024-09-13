@@ -179,13 +179,13 @@ async function createProfilePictureList() {
 
     // Iterate over entries
     for await (const pfpDirent of pfpDir) {
-
         // Check if entry is a directory, if not, throw error
         if (pfpDirent.isFile()) {
             profilePictureList.push(pfpDirent.name);
         }
         else {
-            throw new Error("The folder 'profile_pics' should contain only ().");
+            // potentially check for .png / .jpeg etc.
+            throw new Error("The folder 'profile_pics' should contain only files.");
         }
     }
 
@@ -193,18 +193,45 @@ async function createProfilePictureList() {
 }
 
 async function createImageList(gameName) {
-    let imageList = [];
+    var imageList = [];
+    var rootPath = path.join(__dirname, "games", gameName, "images");
+    
+    async function scanDir(relativePath) {
+        // The folder will always exist because the function will be run only if imgDir has this folder as a dirent
+        var imgDir = await fs.opendir(path.join(rootPath, relativePath));
 
-    // Open the profile picture directory
+        // Scroll through the folder
+        for await (const imgDirent of imgDir) {
+            console.log("Knedle");
+            if (imgDirent.isFile()) {
+                imageList.push(path.join(relativePath, imgDirent.name));
+                console.log(path.join(relativePath, imgDirent.name))
+            }
+            else if (imgDirent.isDirectory()) {
+                scanDir(path.join(relativePath, imgDirent.name))
+            }
+            else {
+                throw new Error("The folder 'images' should contain only folders and files.")
+            }
+        }
+    }
+
+    // Try opening the profile picture directory
     try {
-        var imagesDir = await fs.opendir(path.join(__dirname, "games", gameName, "images"));
+        let dir = await fs.opendir(rootPath);
+        dir.close();
     } catch {
         // If it doesn't exist, create it and return empty pfp list
         fs.mkdir(path.join(__dirname, "games", gameName, "images"));
         return imageList;
     }
+    
+    scanDir("");
+
+    console.log(imageList);
 }
 
+createImageList("desert");
 
 // Main menu handlers
 ipcMain.handle("getGameList", async () => await createGameList());
