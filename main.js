@@ -75,167 +75,209 @@ let games = {
 };
 
 
+// Functions for reading file system contents
+const fileSystem = {
+    async getAvailableModules() {
+        var moduleList = [];
 
+        // open the modules directory
+        try {
+            var modulesDir = await fs.opendir(path.join(__dirname, "modules"));
+        } catch {
+            // if it doesn't exist, create it and return empty list
+            fs.mkdir(path.join(__dirname, "modules"));
+            return moduleList;
+        } 
 
-// Functions for reading available modules and games
-async function createModuleList() {
-    var moduleList = [];
+        // iterate over entries
+        for await (const moduleDirent of modulesDir) {
 
-    // open the modules directory
-    try {
-        var modulesDir = await fs.opendir(path.join(__dirname, "modules"));
-    } catch {
-        // if it doesn't exist, create it and return empty list
-        fs.mkdir(path.join(__dirname, "modules"));
-        return moduleList;
-    } 
+            // check if entry is a directory, if not, throw error
+            if (moduleDirent.isDirectory()) {
+                let moduleName = moduleDirent.name;
+                
+                // check and generate list of extension names
+                let extensions = [];
+                let hasExtensions = true;
 
-    // iterate over entries
-    for await (const moduleDirent of modulesDir) {
+                // open the extensions dir
+                try {
+                    var extensionsDir = await fs.opendir(path.join(__dirname, "modules", moduleName, "extensions"));
+                }
+                catch {
+                    // if there is no extension folder, skip next part
+                    hasExtensions = false;
+                }
 
-        // check if entry is a directory, if not, throw error
-        if (moduleDirent.isDirectory()) {
-            let moduleName = moduleDirent.name;
-            
-            // check and generate list of extension names
-            let extensions = [];
-            let hasExtensions = true;
+                if (hasExtensions) {
+                    // cycle through the extensions
+                    for await (const extensionDirent of extensionsDir) {
+                        extensionName = extensionDirent.name;
 
-            // open the extensions dir
-            try {
-                var extensionsDir = await fs.opendir(path.join(__dirname, "modules", moduleName, "extensions"));
-            }
-            catch {
-                // if there is no extension folder, skip next part
-                hasExtensions = false;
-            }
-
-            if (hasExtensions) {
-                // cycle through the extensions
-                for await (const extensionDirent of extensionsDir) {
-                    extensionName = extensionDirent.name;
-
-                    // check if entry is a .js file, else throw error
-                    if (extensionDirent.isFile() && (path.extname(extensionName) == ".js")) {
-                        // add name of extension to list
-                        extensions.push(extensionName.substring(0, extensionName.length-3));
-                    }
-                    else {
-                        throw new Error("The folder 'extensions' of the module '" + moduleName + "' should contain only .js files.")
+                        // check if entry is a .js file, else throw error
+                        if (extensionDirent.isFile() && (path.extname(extensionName) == ".js")) {
+                            // add name of extension to list
+                            extensions.push(extensionName.substring(0, extensionName.length-3));
+                        }
+                        else {
+                            throw new Error("The folder 'extensions' of the module '" + moduleName + "' should contain only .js files.")
+                        }
                     }
                 }
-            }
-            
-            moduleList.push(new moduleInfo(moduleName, extensions));
+                
+                moduleList.push(new moduleInfo(moduleName, extensions));
 
-        }
-        else {
-            throw new Error("The folder 'modules' should contain only folders.");
-        }
-    }
-    
-    return moduleList;
-}
-
-async function createGameList() {
-    var gameList = [];
-
-    // open the games directory
-    try {
-        var gamesDir = await fs.opendir(path.join(__dirname, "games"));
-    } catch {
-        // if it doesn't exist, create it and return empty list
-        fs.mkdir(path.join(__dirname, "games"));
-        return gameList;
-    } 
-
-    // iterate over entries
-    for await (const gameDirent of gamesDir) {
-
-        // check if entry is a directory, if not, throw error
-        if (gameDirent.isDirectory()) {
-            gameList.push(gameDirent.name);
-        }
-        else {
-            throw new Error("The folder 'games' should contain only folders.");
-        }
-    }
-    
-    return gameList;
-}
-
-// Functions to obtain lists of existing image files etc.
-async function createProfilePictureList() {
-    let profilePictureList = [];
-
-    // Open the profile picture directory
-    try {
-        var pfpDir = await fs.opendir(path.join(__dirname, "profile_pics"));
-    } catch {
-        // If it doesn't exist, create it and return empty pfp list
-        fs.mkdir(path.join(__dirname, "profile_pics"));
-        return profilePictureList;
-    }
-
-    // Iterate over entries
-    for await (const pfpDirent of pfpDir) {
-        // Check if entry is a directory, if not, throw error
-        if (pfpDirent.isFile()) {
-            profilePictureList.push(pfpDirent.name);
-        }
-        else {
-            // potentially check for .png / .jpeg etc.
-            throw new Error("The folder 'profile_pics' should contain only files.");
-        }
-    }
-
-    return profilePictureList;
-}
-
-async function createImageList(gameName) {
-    var imageList = [];
-    var rootPath = path.join(__dirname, "games", gameName, "images");
-    
-    async function scanDir(relativePath) {
-        // The folder will always exist because the function will be run only if imgDir has this folder as a dirent
-        var imgDir = await fs.opendir(path.join(rootPath, relativePath));
-
-        // Scroll through the folder
-        for await (const imgDirent of imgDir) {
-            console.log("Knedle");
-            if (imgDirent.isFile()) {
-                imageList.push(path.join(relativePath, imgDirent.name));
-                console.log(path.join(relativePath, imgDirent.name))
-            }
-            else if (imgDirent.isDirectory()) {
-                scanDir(path.join(relativePath, imgDirent.name))
             }
             else {
-                throw new Error("The folder 'images' should contain only folders and files.")
+                throw new Error("The folder 'modules' should contain only folders.");
             }
         }
-    }
+        
+        return moduleList;
+    },
 
-    // Try opening the profile picture directory
-    try {
-        let dir = await fs.opendir(rootPath);
-        dir.close();
-    } catch {
-        // If it doesn't exist, create it and return empty pfp list
-        fs.mkdir(path.join(__dirname, "games", gameName, "images"));
-        return imageList;
-    }
-    
-    scanDir("");
+    async getExistingGames() {
+        var gameList = [];
 
-    console.log(imageList);
+        // open the games directory
+        try {
+            var gamesDir = await fs.opendir(path.join(__dirname, "games"));
+        } catch {
+            // if it doesn't exist, create it and return empty list
+            fs.mkdir(path.join(__dirname, "games"));
+            return gameList;
+        } 
+
+        // iterate over entries
+        for await (const gameDirent of gamesDir) {
+
+            // check if entry is a directory, if not, throw error
+            if (gameDirent.isDirectory()) {
+                gameList.push(gameDirent.name);
+            }
+            else {
+                throw new Error("The folder 'games' should contain only folders.");
+            }
+        }
+        
+        return gameList;
+    },
+
+    async getAvailableProfilePictures() {
+        let profilePictureList = [];
+
+        // Open the profile picture directory
+        try {
+            var pfpDir = await fs.opendir(path.join(__dirname, "profile_pics"));
+        } catch {
+            // If it doesn't exist, create it and return empty pfp list
+            fs.mkdir(path.join(__dirname, "profile_pics"));
+            return profilePictureList;
+        }
+
+        // Iterate over entries
+        for await (const pfpDirent of pfpDir) {
+            // Check if entry is a directory, if not, throw error
+            if (pfpDirent.isFile()) {
+                profilePictureList.push(pfpDirent.name);
+            }
+            else {
+                // potentially check for .png / .jpeg etc.
+                throw new Error("The folder 'profile_pics' should contain only files.");
+            }
+        }
+
+        return profilePictureList;
+    },
+
+    async getAvailableAssets(gameName) {
+        var assetList = [];
+        var rootPath = path.join(__dirname, "games", gameName, "assets");
+        
+        // Function to scan a directory - recursive
+        async function scanDir(relativePath) {
+            // The folder will always exist because the function will be run only if assetDir has this folder as a dirent
+            var assetDir = await fs.opendir(path.join(rootPath, relativePath));
+
+            // Scroll through the folder
+            for await (const assetDirent of assetDir) {
+                if (assetDirent.isFile()) {
+                    // Add the relative file path to imageList
+                    assetList.push(path.join(relativePath, assetDirent.name));
+                }
+                else if (assetDirent.isDirectory()) {
+                    await scanDir(path.join(relativePath, assetDirent.name));
+                }
+                else {
+                    throw new Error("The folder 'assets' should contain only folders and files.");
+                }
+            }
+        }
+
+        // Try opening the profile picture directory
+        try {
+            let dir = await fs.opendir(rootPath);
+            dir.close();
+        } catch {
+            // If it doesn't exist, create it and return empty pfp list
+            fs.mkdir(rootPath);
+            return assetList;
+        }
+        
+        await scanDir("");
+
+        return assetList;
+    },
+
+    async addProfilePicture(playerName, data) {
+        let pfpPath = path.join(__dirname, "profile_pics", playerName + ".png")
+        try {
+            await fs.writeFile(pfpPath, data);
+        } catch {
+            await fs.mkdir(path.join(__dirname, "profile_pics"));
+            await fs.writeFile(pfpPath, data);
+        }
+    },
+
+    async addAsset(localPath, data) {
+        var assetPath = path.join(__dirname, "games", "desert", "assets", localPath);
+        
+        try {
+            // Try to make the file
+            await fs.writeFile(assetPath, data);
+        }
+        catch {
+            // Function to try and create the dir one level above
+            async function tryCreateDir(dirPath) {
+                dirPath = path.dirname(dirPath)
+                
+                try {
+                    console.log(dirPath);
+                    // Create the dir
+                    await fs.mkdir(dirPath);
+                }
+                catch {
+                    // If it fails, recurse to one level above and then try again
+                    await tryCreateDir(dirPath);
+                    await fs.mkdir(dirPath);
+
+                }
+            }
+
+            await createDir(assetPath);
+            await fs.writeFile(assetPath, data);
+        }
+    },
+
+    //async removeAsset(localPath) {}
 }
+//fileSystem.addAsset("knedle/test/test.txt", "textus na testus");
 
-createImageList("desert");
+fileSystem.getAvailableAssets("desert");
 
 // Main menu handlers
-ipcMain.handle("getGameList", async () => await createGameList());
-ipcMain.handle("getModuleList", async () => await createModuleList());
+ipcMain.handle("getGameList", async () => await fileSystem.getExistingGames());
+ipcMain.handle("getModuleList", async () => await fileSystem.getAvailableModules());
 ipcMain.handle("getSelectedModules", (ev, gameName) => games[gameName]);
 ipcMain.handle("setSelectedModules", (ev, gameName, moduleList) => games[gameName] = moduleList);
 
@@ -270,39 +312,3 @@ ipcMain.handle("loadGame", (ev, gameName) => {
 
     }
 });
-
-
-
-
-
-
-
-
-
-
-/*
-function createWindow(w, h, x, y, file) {
-    win = new BrowserWindow({
-        width: w,
-        height: h,
-        x: x,
-        y: y,
-        webPreferences: {
-            preload: path.join(__dirname, "preload.js")
-        }
-    })
-
-    win.loadFile(file);
-    return win;
-}
-
-app.whenReady().then(() => {
-    window1 = createWindow(800, 600, 10, 10, "test_functions/index.html");
-    window2 = createWindow(600, 800, 900, 700, "test_functions/susdex.html");
-    
-    const {port1, port2} = new MessageChannelMain();
-    
-    window1.webContents.postMessage("port", "", [port1]);
-    window2.webContents.postMessage("port", "", [port2]);
-});
-*/
