@@ -78,45 +78,46 @@ let games = {
 // Functions for reading file system contents
 const fileSystem = {
     async getAvailableModules() {
+        var dirPath = path.join(__dirname, "modules");
         var moduleList = [];
 
-        // open the modules directory
+        // Open the modules directory
         try {
-            var modulesDir = await fs.opendir(path.join(__dirname, "modules"));
+            var modulesDir = await fs.opendir(dirPath);
         } catch {
-            // if it doesn't exist, create it and return empty list
-            fs.mkdir(path.join(__dirname, "modules"));
+            // If it doesn't exist, create it and return empty list
+            fs.mkdir(dirPath);
             return moduleList;
         } 
 
-        // iterate over entries
+        // Iterate over entries
         for await (const moduleDirent of modulesDir) {
 
-            // check if entry is a directory, if not, throw error
+            // Check if entry is a directory, if not, throw error
             if (moduleDirent.isDirectory()) {
                 let moduleName = moduleDirent.name;
                 
-                // check and generate list of extension names
+                // Check and generate list of extension names
                 let extensions = [];
                 let hasExtensions = true;
 
-                // open the extensions dir
+                // Open the extensions dir
                 try {
-                    var extensionsDir = await fs.opendir(path.join(__dirname, "modules", moduleName, "extensions"));
+                    var extensionsDir = await fs.opendir(path.join(dirPath, moduleName, "extensions"));
                 }
                 catch {
-                    // if there is no extension folder, skip next part
+                    // If there is no extension folder, skip next part
                     hasExtensions = false;
                 }
 
                 if (hasExtensions) {
-                    // cycle through the extensions
+                    // Cycle through the extensions
                     for await (const extensionDirent of extensionsDir) {
                         extensionName = extensionDirent.name;
 
-                        // check if entry is a .js file, else throw error
+                        // Check if entry is a .js file, else throw error
                         if (extensionDirent.isFile() && (path.extname(extensionName) == ".js")) {
-                            // add name of extension to list
+                            // Add name of extension to list
                             extensions.push(extensionName.substring(0, extensionName.length-3));
                         }
                         else {
@@ -137,21 +138,21 @@ const fileSystem = {
     },
 
     async getExistingGames() {
+        var dirPath = path.join(__dirname, "games");
         var gameList = [];
 
-        // open the games directory
+        // Open the games directory
         try {
-            var gamesDir = await fs.opendir(path.join(__dirname, "games"));
+            var gamesDir = await fs.opendir(dirPath);
         } catch {
-            // if it doesn't exist, create it and return empty list
-            fs.mkdir(path.join(__dirname, "games"));
+            // If it doesn't exist, create it and return empty list
+            fs.mkdir(dirPath);
             return gameList;
         } 
 
-        // iterate over entries
+        // Iterate over entries
         for await (const gameDirent of gamesDir) {
-
-            // check if entry is a directory, if not, throw error
+            // If entry is not a directory, throw error
             if (gameDirent.isDirectory()) {
                 gameList.push(gameDirent.name);
             }
@@ -164,14 +165,15 @@ const fileSystem = {
     },
 
     async getAvailableProfilePictures() {
+        var dirPath = path.join(__dirname, "profile_pics")
         let profilePictureList = [];
 
         // Open the profile picture directory
         try {
-            var pfpDir = await fs.opendir(path.join(__dirname, "profile_pics"));
+            var pfpDir = await fs.opendir(dirPath);
         } catch {
             // If it doesn't exist, create it and return empty pfp list
-            fs.mkdir(path.join(__dirname, "profile_pics"));
+            fs.mkdir(dirPath);
             return profilePictureList;
         }
 
@@ -182,7 +184,7 @@ const fileSystem = {
                 profilePictureList.push(pfpDirent.name);
             }
             else {
-                // potentially check for .png / .jpeg etc.
+                // To do - potentially check for .png / .jpeg etc.
                 throw new Error("The folder 'profile_pics' should contain only files.");
             }
         }
@@ -193,26 +195,6 @@ const fileSystem = {
     async getAvailableAssets(gameName) {
         var assetList = [];
         var rootPath = path.join(__dirname, "games", gameName, "assets");
-        
-        // Function to scan a directory - recursive
-        async function scanDir(relativePath) {
-            // The folder will always exist because the function will be run only if assetDir has this folder as a dirent
-            var assetDir = await fs.opendir(path.join(rootPath, relativePath));
-
-            // Scroll through the folder
-            for await (const assetDirent of assetDir) {
-                if (assetDirent.isFile()) {
-                    // Add the relative file path to imageList
-                    assetList.push(path.join(relativePath, assetDirent.name));
-                }
-                else if (assetDirent.isDirectory()) {
-                    await scanDir(path.join(relativePath, assetDirent.name));
-                }
-                else {
-                    throw new Error("The folder 'assets' should contain only folders and files.");
-                }
-            }
-        }
 
         // Try opening the profile picture directory
         try {
@@ -223,6 +205,27 @@ const fileSystem = {
             fs.mkdir(rootPath);
             return assetList;
         }
+
+        // Function to scan a directory
+        async function scanDir(relativePath) {
+            // The folder will always exist because the function will be run only if assetDir has this folder as a dirent
+            var assetDir = await fs.opendir(path.join(rootPath, relativePath));
+
+            // Scroll through the folder
+            for await (const assetDirent of assetDir) {
+                if (assetDirent.isFile()) {
+                    // If dirent is a file, add the relative file path to imageList
+                    assetList.push(path.join(relativePath, assetDirent.name));
+                }
+                else if (assetDirent.isDirectory()) {
+                    // If dirent is a folder, scan it using recursion
+                    await scanDir(path.join(relativePath, assetDirent.name));
+                }
+                else {
+                    throw new Error("The folder 'assets' should contain only folders and files.");
+                }
+            }
+        }
         
         await scanDir("");
 
@@ -231,9 +234,12 @@ const fileSystem = {
 
     async addProfilePicture(playerName, data) {
         let pfpPath = path.join(__dirname, "profile_pics", playerName + ".png")
+
         try {
+            // Try writing the file
             await fs.writeFile(pfpPath, data);
         } catch {
+            // If the profile_pics dir doesn't exist, create it and write again
             await fs.mkdir(path.join(__dirname, "profile_pics"));
             await fs.writeFile(pfpPath, data);
         }
@@ -247,33 +253,32 @@ const fileSystem = {
             await fs.writeFile(assetPath, data);
         }
         catch {
-            // Function to try and create the dir one level above
-            async function tryCreateDir(dirPath) {
-                dirPath = path.dirname(dirPath)
-                
-                try {
-                    console.log(dirPath);
-                    // Create the dir
-                    await fs.mkdir(dirPath);
-                }
-                catch {
-                    // If it fails, recurse to one level above and then try again
-                    await tryCreateDir(dirPath);
-                    await fs.mkdir(dirPath);
-
-                }
-            }
-
-            await createDir(assetPath);
+            // If it fails, create the dir and try again
+            await fs.mkdir(path.dirname(assetPath), {recursive: true});
             await fs.writeFile(assetPath, data);
         }
     },
 
-    //async removeAsset(localPath) {}
-}
-//fileSystem.addAsset("knedle/test/test.txt", "textus na testus");
+    async removeAsset(localPath) {
+        var assetPath = path.join(__dirname, "games", "desert", "assets", localPath);
+        let fileAmount = 0;
 
-fileSystem.getAvailableAssets("desert");
+        while (fileAmount < 2) {
+            try {
+                fileAmount = (await fs.readdir(path.dirname(assetPath), )).length;
+            }
+            catch {}
+
+        }
+        try {
+            await fs.rm(assetPath);
+        }
+        catch {}
+    }
+}
+
+fileSystem.addAsset("knedle/test/test.txt", "textus na testus");
+
 
 // Main menu handlers
 ipcMain.handle("getGameList", async () => await fileSystem.getExistingGames());
