@@ -259,8 +259,18 @@ const fileSystem = {
         }
     },
 
+
     async removeAsset(localPath) {
         var assetPath = path.join(__dirname, "games", "desert", "assets", localPath);
+        
+        function checkParentFolder(assetPath) {
+            path = 
+        }
+        
+        fileAmount = (await fs.readdir(path.dirname(assetPath), )).length;
+        console.log(fileAmount);
+
+        /*
         let fileAmount = 0;
 
         while (fileAmount < 2) {
@@ -274,10 +284,12 @@ const fileSystem = {
             await fs.rm(assetPath);
         }
         catch {}
+        */
     }
+
 }
 
-fileSystem.addAsset("knedle/test/test.txt", "textus na testus");
+fileSystem.removeAsset("knedle/test/test.txt");
 
 
 // Main menu handlers
