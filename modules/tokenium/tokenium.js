@@ -10,7 +10,7 @@ function unpx(pixels) {
 
 // temporary stuff (will later be managed by other front end systems like character manager)
 var imgDict = {
-    "Dave": "../../games/desert/images/Dave.png"
+    "Dave": "../../games/desert/assets/Dave.png"
 }
 const playerColor = "#00FFFF";
 

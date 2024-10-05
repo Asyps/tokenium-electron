@@ -6,6 +6,9 @@
     "author": "Artur Balák",
     "license": "MIT",
     "scripts": {
-      "start": "electron ."
+        "start": "electron ."
+    },
+    "devDependencies": {
+        "electron": "^32.1.2"
     }
 }
