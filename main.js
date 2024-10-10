@@ -165,7 +165,7 @@ const fileSystem = {
     },
 
     async getAvailableProfilePictures() {
-        var dirPath = path.join(__dirname, "profile_pics")
+        var dirPath = path.join(__dirname, "profile_pics");
         let profilePictureList = [];
 
         // Open the profile picture directory
@@ -259,38 +259,49 @@ const fileSystem = {
         }
     },
 
-
     async removeAsset(localPath) {
-        var assetPath = path.join(__dirname, "games", "desert", "assets", localPath);
+        let assetPath = path.join(__dirname, "games", "desert", "assets", localPath);
         
-        function checkParentFolder(assetPath) {
-            path = 
-        }
-        
-        fileAmount = (await fs.readdir(path.dirname(assetPath), )).length;
-        console.log(fileAmount);
+        // Returns the path to be deleted
+        async function checkParentFolder(filePath) {
+            let parentPath = path.dirname(filePath);
 
-        /*
-        let fileAmount = 0;
-
-        while (fileAmount < 2) {
+            //if (path.fi)
+            
             try {
-                fileAmount = (await fs.readdir(path.dirname(assetPath), )).length;
+                var fileAmount = await fs.readdir(parentPath).lenght;
             }
-            catch {}
-
+            catch {
+                // If the parent folder can't be read, stop checking
+                return filePath;
+            }
+            
+            // If the file amount in the parent folder is 1, it means it contains no files or folders except for the one being deleted
+            if (fileAmount <= 1) {
+                // Check the parent folder of the checked folder
+                return await checkParentFolder(parentPath);
+            }
+            
+            // If the folder isn't empty, return the original path
+            return filePath;
         }
+        
         try {
-            await fs.rm(assetPath);
+            fs.rm(await checkParentFolder(assetPath), {recursive: true});
         }
-        catch {}
-        */
+        catch {
+            console.log("Failure")
+        }
     }
 
 }
 
-fileSystem.removeAsset("knedle/test/test.txt");
+async function bob() {
+    await fileSystem.addAsset("knedle/test/test.txt", "kk");
+    await fileSystem.removeAsset("knedle/test/test.txt");
+}
 
+bob();
 
 // Main menu handlers
 ipcMain.handle("getGameList", async () => await fileSystem.getExistingGames());
