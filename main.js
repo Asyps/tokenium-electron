@@ -266,29 +266,28 @@ const fileSystem = {
         async function checkParentFolder(filePath) {
             let parentPath = path.dirname(filePath);
 
-            //if (path.fi)
+            console.log(path.basename(parentPath));
+            if (path.basename(parentPath) == "assets") {
+                // Safety recursion stop (to not delete the assets folder or anything above)
+                return filePath;
+            }
             
             try {
-                var parentFolderContents = await fs.readdir(parentPath);
+                var fileAmount = (await fs.readdir(parentPath)).length;
             }
             catch {
                 // If the parent folder can't be read, stop checking
-                console.log("read failure: " + filePath);
                 return filePath;
                 
             }
-
-            
             
             // If the file amount in the parent folder is 1, it means it contains no files or folders except for the one being deleted
             if (fileAmount <= 1) {
                 // Check the parent folder of the checked folder
-                console.log("continue recursion: " + parentPath);
                 return await checkParentFolder(parentPath);
             }
             
             // If the folder isn't empty, return the original path
-            console.log("end recursion: " + filePath)
             return filePath;
         }
         
@@ -304,6 +303,7 @@ const fileSystem = {
 
 async function bob() {
     await fileSystem.addAsset("knedle/test/test.txt", "kk");
+    await fileSystem.addAsset("knedle/test.txt", "textus na testus");
     await fileSystem.removeAsset("knedle/test/test.txt");
 }
 
