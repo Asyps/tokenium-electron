@@ -302,12 +302,14 @@ ipcMain.handle("getModuleList", async () => await fileSystem.getAvailableModules
 ipcMain.handle("getSelectedModules", (ev, gameName) => games[gameName]);
 ipcMain.handle("setSelectedModules", (ev, gameName, moduleList) => games[gameName] = moduleList);
 
+var active_windows = {};
 ipcMain.handle("loadGame", (ev, gameName) => {
     // Close main menu
     mainMenu.close();
 
     // Get the list of modules to load
-    modList = games[gameName];
+    let modList = games[gameName];
+    
 
     for (i of modList) {
         // Create the module window
@@ -317,11 +319,9 @@ ipcMain.handle("loadGame", (ev, gameName) => {
             height: 600,
             x: 25,
             y: 50,
-            /*
             webPreferences: {
-                preload: path.join(__dirname, "preload.js");
+                preload: path.join(__dirname, "preload.js")
             }
-            */
         });
 
         moduleWindow.loadFile(path.join(__dirname, "modules", i.name, "index.html"));
@@ -331,5 +331,11 @@ ipcMain.handle("loadGame", (ev, gameName) => {
             moduleWindow.webContents.executeJavaScript("window.s = document.createElement('script'); window.s.src = 'extensions\\" + path.sep + j + ".js'; document.body.appendChild(window.s); delete window.s;");
         }
 
+        active_windows[i.name] = moduleWindow;
     }
+});
+
+// Communication system handler
+ipcMain.handle("callFunction", (ev, moduleName, functionName, ...args) => {
+    active_windows[moduleName].webContents.send("API-" + functionName, args);
 });
