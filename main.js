@@ -11,6 +11,7 @@ app.on("window-all-closed", () => {
     if (process.platform != "darwin") app.quit();
 });
 
+
 // Main menu
 app.whenReady().then(() => {
     // Open the main menu
@@ -118,7 +119,7 @@ const fileSystem = {
                         // Check if entry is a .js file, else throw error
                         if (extensionDirent.isFile() && (path.extname(extensionName) == ".js")) {
                             // Add name of extension to list
-                            extensions.push(extensionName.substring(0, extensionName.length-3));
+                            extensions.push(path.basename(extensionName, ".js"));
                         }
                         else {
                             throw new Error("The folder 'extensions' of the module '" + moduleName + "' should contain only .js files.")
@@ -266,7 +267,6 @@ const fileSystem = {
         async function checkParentFolder(filePath) {
             let parentPath = path.dirname(filePath);
 
-            console.log(path.basename(parentPath));
             if (path.basename(parentPath) == "assets") {
                 // Safety recursion stop (to not delete the assets folder or anything above)
                 return filePath;
@@ -291,23 +291,10 @@ const fileSystem = {
             return filePath;
         }
         
-        try {
-            fs.rm(await checkParentFolder(assetPath), {recursive: true});
-        }
-        catch {
-            console.log("Failure")
-        }
+        fs.rm(await checkParentFolder(assetPath), {recursive: true});
     }
 
 }
-
-async function bob() {
-    await fileSystem.addAsset("knedle/test/test.txt", "kk");
-    await fileSystem.addAsset("knedle/test.txt", "textus na testus");
-    await fileSystem.removeAsset("knedle/test/test.txt");
-}
-
-bob();
 
 // Main menu handlers
 ipcMain.handle("getGameList", async () => await fileSystem.getExistingGames());
