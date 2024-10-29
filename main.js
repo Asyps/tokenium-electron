@@ -337,5 +337,26 @@ ipcMain.handle("loadGame", (ev, gameName) => {
 
 // Communication system handler
 ipcMain.handle("callFunction", (ev, moduleName, functionName, ...args) => {
-    active_windows[moduleName].webContents.send("API-" + functionName, args);
+    // empty module name => broadcast
+    if (moduleName == "") {
+        for (i in active_windows) {
+            try {
+                active_windows[i].webContents.send("API-" + functionName, args);
+            }
+            catch {
+                throw new Error("Module's window was closed.");
+                // I can probably ignore this error. If window was closed, do nothing. Perhaps I can remove the destroyed object from active_windows
+            }
+        }
+    }
+    else {
+        try {
+            active_windows[moduleName].webContents.send("API-" + functionName, args);
+        }
+        catch {
+            throw new Error("Module is not loaded or it's window was closed.");
+
+            // Ig I can just ignore this error, if the module is not loaded or it's window was closed, simply do nothing
+        }
+    }
 });
