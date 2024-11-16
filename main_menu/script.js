@@ -1,4 +1,7 @@
 let gameDropdown = document.getElementById("select game");
+let playButton = document.getElementById("play");
+let changeButton = document.getElementById("change");
+let removeButton = document.getElementById("remove");
 
 // Startup
 async function setupGameDropdown() {
@@ -14,6 +17,20 @@ async function setupGameDropdown() {
 }
 
 setupGameDropdown();
+
+gameDropdown.onchange = () => {
+    if (gameDropdown.value != "-") {
+        playButton.disabled = false;
+        changeButton.disabled = false;
+        removeButton.disabled = false;
+    }
+    else {
+        playButton.disabled = true;
+        changeButton.disabled = true;
+        removeButton.disabled = true;
+    }
+}
+
 
 // Play button
 function start() {

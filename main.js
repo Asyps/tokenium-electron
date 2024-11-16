@@ -2,20 +2,26 @@
 process.traceProcessWarnings = true
 
 // Imports
-const { app, BrowserWindow, ipcMain, MessageChannelMain } = require('electron');
+const { app, BrowserWindow, ipcMain, screen } = require('electron');
 const fs = require("fs/promises");
 const path = require("path");
 
+// a place to put the main process global variables
+globals = {};
+
 // Close the application when all windows are closed
 app.on("window-all-closed", () => {
-    if (process.platform != "darwin") app.quit();
+    if (process.platform != "darwin") {
+        if (globals.gameName) fileSystem.saveWindowLayout();
+        app.quit();
+    }
 });
 
 
 // Main menu
 app.whenReady().then(() => {
     // Open the main menu
-    mainMenu = new BrowserWindow({
+    globals.mainMenu = new BrowserWindow({
         // To do - security stuff
         width: 800,
         height: 600,
@@ -26,10 +32,10 @@ app.whenReady().then(() => {
         }
     });
 
-    mainMenu.loadFile(path.join(__dirname, "main_menu", "index.html"));
+    globals.mainMenu.loadFile(path.join(__dirname, "main_menu", "index.html"));
 
     // Handler for the module selector window
-    mainMenu.webContents.setWindowOpenHandler(() => {
+    globals.mainMenu.webContents.setWindowOpenHandler(() => {
         // To do - security stuff
         return {
             action: "allow",
@@ -41,7 +47,7 @@ app.whenReady().then(() => {
                 resizable: true,
                 
                 modal: true,
-                parent: mainMenu,
+                parent: globals.mainMenu,
 
                 webPreferences: {
                     preload: path.join(__dirname, "module_selector", "preload.js")
@@ -193,9 +199,11 @@ const fileSystem = {
         return profilePictureList;
     },
 
-    async getAvailableAssets(gameName) {
+    async getAvailableAssets() {
+        if (!globals.gameName) throw new Error("Tried to run a function dependent on the game name while no game was selected.");
+        
         var assetList = [];
-        var rootPath = path.join(__dirname, "games", gameName, "assets");
+        var rootPath = path.join(__dirname, "games", globals.gameName, "assets");
 
         // Try opening the profile picture directory
         try {
@@ -234,7 +242,7 @@ const fileSystem = {
     },
 
     async addProfilePicture(playerName, data) {
-        let pfpPath = path.join(__dirname, "profile_pics", playerName + ".png")
+        let pfpPath = path.join(__dirname, "profile_pics", playerName + ".png");
 
         try {
             // Try writing the file
@@ -247,7 +255,9 @@ const fileSystem = {
     },
 
     async addAsset(localPath, data) {
-        var assetPath = path.join(__dirname, "games", "desert", "assets", localPath);
+        if (!globals.gameName) throw new Error("Tried to run a function dependent on the game name while no game was selected.");
+
+        var assetPath = path.join(__dirname, "games", globals.gameName, "assets", localPath);
         
         try {
             // Try to make the file
@@ -261,7 +271,9 @@ const fileSystem = {
     },
 
     async removeAsset(localPath) {
-        let assetPath = path.join(__dirname, "games", "desert", "assets", localPath);
+        if (!window.gameName) throw new Error("Tried to run a function dependent on the game name while no game was selected.");
+
+        let assetPath = path.join(__dirname, "games", window.gameName, "assets", localPath);
         
         // Returns the path to be deleted
         async function checkParentFolder(filePath) {
@@ -278,7 +290,6 @@ const fileSystem = {
             catch {
                 // If the parent folder can't be read, stop checking
                 return filePath;
-                
             }
             
             // If the file amount in the parent folder is 1, it means it contains no files or folders except for the one being deleted
@@ -292,8 +303,31 @@ const fileSystem = {
         }
         
         fs.rm(await checkParentFolder(assetPath), {recursive: true});
-    }
+    },
 
+    async getWindowLayout() {
+        if (!globals.gameName) throw new Error("Tried to run a function dependent on the game name while no game was selected.")
+
+        let filePath = path.join(__dirname, "games", globals.gameName, "window_layout.json");
+
+        try {
+            let rawData = await fs.readFile(filePath, {encoding: "utf-8"});
+            return JSON.parse(rawData);
+        }
+        catch {
+            // Return an empty object if the file doesn't exist
+            return {};
+        }
+        
+    },
+
+    async saveWindowLayout() {
+        if (!globals.gameName) throw new Error("Tried to run a function dependent on the game name while no game was selected.");
+
+        let filePath = path.join(__dirname, "games", globals.gameName, "window_layout.json");
+
+        await fs.writeFile(filePath, JSON.stringify(globals.windowLayout, null, 4), {encoding: "utf8"});
+    }
 }
 
 // Main menu handlers
@@ -303,27 +337,67 @@ ipcMain.handle("getSelectedModules", (ev, gameName) => games[gameName]);
 ipcMain.handle("setSelectedModules", (ev, gameName, moduleList) => games[gameName] = moduleList);
 
 var active_windows = {};
-ipcMain.handle("loadGame", (ev, gameName) => {
-    // Close main menu
-    mainMenu.close();
+ipcMain.handle("loadGame", async (ev, gameName) => {
+    // Set variables
+    globals.gameName = gameName;
 
     // Get the list of modules to load
     let modList = games[gameName];
     
+    // Obtain the window layout (first try getting the local one, if it doesn't exist, get it from server)
+    globals.windowLayout = await fileSystem.getWindowLayout();
+    if ((Object.keys(globals.windowLayout)).length == 0) {
+        // coming soon :tm:
+        
+        // for now, use a mockup for this case
+        console.log("Getting layout from server");
+        globals.windowLayout = {
+            tokenium: {
+                height: 0.6,
+                width: 0.5,
+                x: 0.375,
+                y: 0
+            },
+            comms_test_receiver_1: {
+                height: 0.2,
+                width: 0.125,
+                x: 0.875,
+                y: 0
+            },
+            chat: {
+                height: 0.8,
+                width: 0.125,
+                x: 0.875,
+                y: 0.2
+            }
+        }
+    }
+    
+    // Get the main display width and height
+    const workAreaSize = screen.getPrimaryDisplay().workAreaSize;
 
+    // For every module needed to be loaded
     for (i of modList) {
+        // Get the module window information
+        let windowInfo = globals.windowLayout[i.name];
+
+        // Convert relative screen value to pixels
+        let width = Math.round(windowInfo.width * workAreaSize.width);
+        let height = Math.round(windowInfo.height * workAreaSize.height);
+        let x = Math.round(windowInfo.x * workAreaSize.width);
+        let y = Math.round(windowInfo.y * workAreaSize.height);
+
         // Create the module window
         let moduleWindow = new BrowserWindow({
-            // To-do security stuff
-            width: 800,
-            height: 600,
-            x: 25,
-            y: 50,
-            webPreferences: {
-                preload: path.join(__dirname, "preload.js")
-            }
+            // to do - security stuff
+            width: width,
+            height: height,
+            x: x,
+            y: y,
+            preload: path.join(__dirname, "preload.js")
         });
 
+        // Assign the html file
         moduleWindow.loadFile(path.join(__dirname, "modules", i.name, "index.html"));
 
         // Add extensions
@@ -331,8 +405,12 @@ ipcMain.handle("loadGame", (ev, gameName) => {
             moduleWindow.webContents.executeJavaScript("window.s = document.createElement('script'); window.s.src = 'extensions\\" + path.sep + j + ".js'; document.body.appendChild(window.s); delete window.s;");
         }
 
+        // Add the window to the window list
         active_windows[i.name] = moduleWindow;
     }
+    
+    // Close main menu
+    globals.mainMenu.close();
 });
 
 // Communication system handler
