@@ -58,10 +58,9 @@ function openTab(tabId) {
     document.querySelector(`.tab-button[onclick="openTab('${tabId}')"]`).classList.add('active');
 }
 
-
-const inWorldChat = {
-    lastMessageSender: "",
-    messages: [
+// Mockup of the chat synchronised document - contains the data for the chat that will be synchronised between all players
+const inWorldChatDocumentMockup = {
+    chatMessages: [
         new chatComponent("system", "Chat exists!"),
         new chatComponent("header", "Greg"),
         new chatComponent("message", "Hi guys!"),
@@ -71,19 +70,25 @@ const inWorldChat = {
         new chatComponent("message", "Ah this guy again."),
         new chatComponent("system", "Chat shuts up!"),
     ],
+    lastMessageSender: "",
+}
 
+
+
+const inWorldChat = {
     internal: {
+        // HTML components
         textInput: document.getElementById("inWorldChatInput"),
         characterInput: document.getElementById("characterSelect"),
         messageArea: document.getElementById("inWorldChatMessages"),
         
+        // Helper functions that add the chat components into DOM
         displaySystemMessage(text) {
             const message = document.createElement('div');
             message.className = 'system-message';
             message.textContent = text;
             this.messageArea.appendChild(message);
         },
-
         displayCharacterHeader(characterName) {
             const header = document.createElement('div');
             header.className = 'user-header';
@@ -102,7 +107,6 @@ const inWorldChat = {
 
             this.messageArea.appendChild(header);
         },
-
         displayCharacterMessage(text) {
             const message = document.createElement('div');
             message.className = 'user-message';
@@ -110,14 +114,15 @@ const inWorldChat = {
             this.messageArea.appendChild(message);
         },
 
+        // Function to display any component
         addChatComponent(component) {
             if (component.type == "system") {
                 this.displaySystemMessage(component.data);
-                playerChat.lastMessageSender = "";
+                inWorldChatDocumentMockup.lastMessageSender = "";       // Always insert a header after a system message
             }
             else if (component.type == "header") {
                 this.displayCharacterHeader(component.data);
-                playerChat.lastMessageSender = component.data;
+                inWorldChatDocumentMockup.lastMessageSender = component.data;
             }
             else {
                 this.displayCharacterMessage(component.data);
@@ -125,28 +130,40 @@ const inWorldChat = {
         }
     },
 
-    send() {
-        let selectedCharacter = this.internal.characterInput.value
-        
-        if (this.lastMessageSender != selectedCharacter) {
-            this.internal.displayCharacterHeader(selectedCharacter);
-            this.messages.push(new chatComponent("header", selectedCharacter));
+    // Send the contents of the text area
+    confirm() {
+        if (this.internal.textInput.value != "") {
+            // Get the name of the selected character
+            let selectedCharacter = this.internal.characterInput.value;
+            
+            if (inWorldChatDocumentMockup.lastMessageSender != selectedCharacter) {
+                // Add a user header unless the last message was sent by the selected character
+                let header = new chatComponent("header", selectedCharacter);
+
+                this.internal.addChatComponent(header);
+                inWorldChatDocumentMockup.chatMessages.push(header);
+            }
+
+            // Add the message
+            let message = new chatComponent("message", this.internal.textInput.value);
+
+            this.internal.addChatComponent(message);
+            inWorldChatDocumentMockup.chatMessages.push(message);
+
+            // Clear the text area
+            this.internal.textInput.value = "";
         }
-
-        this.internal.displayCharacterMessage(this.internal.textInput.value);
-        this.messages.push(new chatComponent("message", this.internal.textInput.value));
-
-        this.internal.textInput.value = "";
-        this.lastMessageSender = selectedCharacter;
     },
 
+    // Send a system message
     sendSystemMessage(text) {
-        this.internal.displaySystemMessage(text);
-        this.messages.push(new chatComponent("system", text));
+        let systemMessage = new chatComponent("system", text);
 
-        this.lastMessageSender = "";
+        this.internal.addChatComponent(systemMessage);
+        inWorldChatDocumentMockup.chatMessages.push(systemMessage);
     },
 
+    // Add a character to the dropdown menu
     addCharacter(name) {
         character = document.createElement("option");
         character.value = character.innerHTML = character.id = name;
@@ -154,10 +171,23 @@ const inWorldChat = {
     }
 }
 
+// Set a keybind to send a message
+inWorldChat.internal.textInput.addEventListener("keydown", (ev) => {
+    if (ev.key == "Enter") {
+        ev.preventDefault();    // Prevent the enter key from being entered into the text area
+        inWorldChat.confirm();
+    }
+});
 
+// API to let other modules send system messages.
+window.defineAPI("inWorldChatSystemMessage", (message) => {
+    inWorldChat.sendSystemMessage(message);
+});
 
-inWorldChat.addCharacter("Bertha");
-
-for (i of inWorldChat.messages) {
+// Initialize chat on module load
+for (i of inWorldChatDocumentMockup.chatMessages) {
     inWorldChat.internal.addChatComponent(i);
 }
+
+// test
+inWorldChat.addCharacter("Bertha");

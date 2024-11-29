@@ -381,11 +381,19 @@ ipcMain.handle("loadGame", async (ev, gameName) => {
         // Get the module window information
         let windowInfo = globals.windowLayout[i.name];
 
-        // Convert relative screen value to pixels
-        let width = Math.round(windowInfo.width * workAreaSize.width);
-        let height = Math.round(windowInfo.height * workAreaSize.height);
-        let x = Math.round(windowInfo.x * workAreaSize.width);
-        let y = Math.round(windowInfo.y * workAreaSize.height);
+        // If the window info exists, convert relative screen value to pixels
+        if (windowInfo) {
+            var width = Math.round(windowInfo.width * workAreaSize.width);
+            var height = Math.round(windowInfo.height * workAreaSize.height);
+            var x = Math.round(windowInfo.x * workAreaSize.width);
+            var y = Math.round(windowInfo.y * workAreaSize.height);
+        }
+        else {      // If the window info doesn't exist, use default values
+            var width = 800
+            var height = 600
+            var x = 50
+            var y = 50
+        }
 
         // Create the module window
         let moduleWindow = new BrowserWindow({
@@ -394,7 +402,9 @@ ipcMain.handle("loadGame", async (ev, gameName) => {
             height: height,
             x: x,
             y: y,
-            preload: path.join(__dirname, "preload.js")
+            webPreferences: {
+                preload: path.join(__dirname, "preload.js")
+            }
         });
 
         // Assign the html file
@@ -411,7 +421,7 @@ ipcMain.handle("loadGame", async (ev, gameName) => {
     
     // Close main menu
     globals.mainMenu.close();
-});
+}); 
 
 // Communication system handler
 ipcMain.handle("callFunction", (ev, moduleName, functionName, ...args) => {
