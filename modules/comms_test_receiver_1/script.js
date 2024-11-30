@@ -1,5 +1,5 @@
 output = document.getElementById("output");
 
-window.defineAPI("changeDisplayedText", (thingToOutput) => {
-    output.value = thingToOutput;
+window.defineAPI("change displayed text", (thingToOutput) => {
+    output.value = thingToOutput[0];
 });

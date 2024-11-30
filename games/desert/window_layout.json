@@ -1,20 +1,20 @@
 {
     "tokenium": {
         "height": 0.6,
-        "width": 0.5,
+        "width": 0.4,
         "x": 0.375,
         "y": 0
     },
     "comms_test_sender_1": {
         "height": 0.2,
-        "width": 0.125,
-        "x": 0.875,
+        "width": 0.2,
+        "x": 0.8,
         "y": 0
     },
     "chat": {
         "height": 0.8,
-        "width": 0.125,
-        "x": 0.875,
+        "width": 0.2,
+        "x": 0.8,
         "y": 0.2
     }
 }

@@ -129,8 +129,8 @@ playerChat.internal.textInput.addEventListener("keydown", (ev) => {
 });
 
 // API to let other modules send system messages.
-window.defineAPI("playerChatSystemMessage", (message) => {
-    playerChat.sendSystemMessage(message);
+window.defineAPI("player chat system message", (args) => {
+    playerChat.sendSystemMessage(args[0]);
 });
 
 
@@ -138,3 +138,5 @@ window.defineAPI("playerChatSystemMessage", (message) => {
 for (i of chatDocumentMockup.chatMessages) {
     playerChat.internal.addChatComponent(i);
 }
+
+window.declareAsLoaded("chat");

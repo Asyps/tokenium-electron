@@ -424,8 +424,8 @@ ipcMain.handle("loadGame", async (ev, gameName) => {
 }); 
 
 // Communication system handler
-ipcMain.handle("callFunction", (ev, moduleName, functionName, ...args) => {
-    // empty module name => broadcast
+ipcMain.handle("callFunction", (ev, moduleName, functionName, args) => {
+    // Empty module name => broadcast
     if (moduleName == "") {
         for (i in active_windows) {
             try {
@@ -445,6 +445,39 @@ ipcMain.handle("callFunction", (ev, moduleName, functionName, ...args) => {
             throw new Error("Module is not loaded or it's window was closed.");
 
             // Ig I can just ignore this error, if the module is not loaded or it's window was closed, simply do nothing
+        }
+    }
+});
+
+const loadedModules = {}
+
+ipcMain.handle("moduleLoadEnquiry", (ev, moduleName, extensionName) => {
+    if (extensionName == undefined) {
+        return loadedModules.hasOwnProperty(moduleName);
+    }
+    else return loadedModules[moduleName].includes(extensionName);
+});
+
+ipcMain.handle("moduleLoadNotice", (ev, moduleName, extensionName) => {
+    if (extensionName == undefined) {
+        // If extensionName is undefined, process the event for a module
+        loadedModules[moduleName] = [];
+        var eventName = moduleName;
+    }
+    else {
+        // Else process it for the extension
+        loadedModules[moduleName].push(extensionName);
+        var eventName = moduleName + ":" + extensionName;
+    }
+
+    // Broadcast the load event
+    for (i in active_windows) {
+        try {
+            active_windows[i].webContents.send("LOAD-" + eventName);
+        }
+        catch {
+            throw new Error("Module's window was closed.");
+            // I can probably ignore this error. If window was closed, do nothing. Perhaps I can remove the destroyed object from active_windows
         }
     }
 });

@@ -77,53 +77,133 @@ playerChat.internal.addChatComponent = (component) => {
     }
 }
 
+// Shortcut functions for command outputs
+playerChat.commandLocal = (text) => {
+    playerChat.internal.addChatComponent(new chatComponent("command local", text));
+}
+playerChat.commandPublic = (text) => {
+    publicOut = new chatComponent("command public", text);
+    playerChat.internal.addChatComponent(publicOut);
+    chatDocumentMockup.push(publicOut);
+}
+playerChat.commandError = (text) => {
+    playerChat.internal.addChatComponent(new chatComponent("command error", text));
+}
+
 
 // A class for command entries
 class command {
-    constructor(callback, syntaxInfo, description, maxArgumentCount=0) {
+    constructor(callback, syntaxInfo, description) {
         this.callback = callback;
         this.syntaxInfo = syntaxInfo;
         this.description = description;
-        this.maxArgumentCount = maxArgumentCount;
     }
 }
 
 const commandDatabase = {
     help: new command(
-        (commandName) => {
+        (flags, commandName) => {
             if (commandName == undefined) {
-                playerChat.internal.addChatComponent(new chatComponent("command local", "To get into command mode, press / when the text field is empty. The character / won't appear in the text area. To cancel command mode, press packspace when the input field is empty."));
-                playerChat.internal.addChatComponent(new chatComponent("command local", "The blue box is a local command output that other players won't see and that will not persist between sessions."));
+                playerChat.commandLocal("To get into command mode, press / when the text field is empty. The character / won't appear in the text area. To cancel command mode, press packspace when the input field is empty.");
+                playerChat.commandLocal("The blue box is a local command output that other players won't see and that will not persist between sessions.");
+
+                // Add the next line directly to chat to not synchronise it between players, because it serves as an example only
                 playerChat.internal.addChatComponent(new chatComponent("command public", "The green box is a public command output that other players will see and that persists between sessions."));
-                playerChat.internal.addChatComponent(new chatComponent("command error", "The red box is a local command output that signifies an error."));
+                playerChat.commandError("The red box is a local command output that signifies an error.");
                 
                 // Generate the list of commands
-                let commandListStr = "";
+                let commandListStr = "List of available commands: ";
                 for (i in commandDatabase) {
                     commandListStr += i + "; ";
                 }
-                commandListStr = commandListStr.slice(0, -2);        //Remove the last "; " characters from the string
+                commandListStr = commandListStr.slice(0, -2);        // Remove the last "; " characters from the string
 
-                playerChat.internal.addChatComponent(new chatComponent("command local", "List of available commands: " + commandListStr));
+                playerChat.commandLocal(commandListStr);
             }
             else if (commandDatabase.hasOwnProperty(commandName)) {
-                playerChat.internal.addChatComponent(new chatComponent("command local", commandDatabase[commandName].syntaxInfo));
-                playerChat.internal.addChatComponent(new chatComponent("command local", commandDatabase[commandName].description));
-
+                playerChat.commandLocal(commandDatabase[commandName].syntaxInfo);
+                playerChat.commandLocal(commandDatabase[commandName].description);
             }
             else {
-                playerChat.internal.addChatComponent(new chatComponent("command error", "The specified command does not exist."));
+                playerChat.commandError("The specified command '" + commandName + "' does not exist.");
             }
         },
         "help [commandName]",
         "Shows the syntax and description of the specified command. If commandName is ommited, shows a manual to use the command system and list of all available commands instead.",
-    )
+    ),
+    moduleHelp: new command(
+        (flags, moduleName, extensionName) => {
+            if (moduleName == undefined) {
+                // If moduleName isn't provided
+                if (flags.includes("-l")) {
+                    // If the -l flag is set, display list of modules
+                    let moduleString = "Modules with available descriptions: ";
+                    for (i in moduleDescriptionDatabase) {
+                        moduleString += i + "; ";
+                    }
+                    moduleString = moduleString.slice(0, -2);        // Remove the last "; " characters from the string
+                    
+                    playerChat.commandLocal(moduleString);
+                }
+                else {
+                    // Otherwise display syntax info
+                    playerChat.commandLocal(commandDatabase.moduleHelp.syntaxInfo);
+                }
+            }
+            else if (extensionName == undefined) {
+                // If no extensionName is specified
+                if (flags.includes("-l")) {
+                    // If the -l flag is set, display list of extensions for this module
+                    if (extensionDescriptionDatabase.hasOwnProperty(moduleName)) {
+                        let extensionString = "Extensions for '" + moduleName + "' with available descriptions: ";
+                        for (i in extensionDescriptionDatabase[moduleName]) {
+                            extensionString += i + "; ";
+                        }
+                        extensionString = extensionString.slice(0, -2);        // Remove the last "; " characters from the string
+                        
+                        playerChat.commandLocal(extensionString);
+                    }
+                    else {
+                        // If the module name isn't included in the description database for extensions, show error
+                        playerChat.commandError("Module '" + moduleName + "' doesn't exist or it doesn't have any extensions that registered a description.");
+                    }
+                }
+                else {
+                    // Otherwise show the description of the module
+                    if (moduleDescriptionDatabase.hasOwnProperty(moduleName)) {
+                        // If the description is registered, show it
+                        playerChat.commandLocal(moduleDescriptionDatabase[moduleName]);
+                    }
+                    else {
+                        // If it isn't registered, show error
+                        playerChat.commandError("Module '" + moduleName + "' doesn't exist or it didn't register a description.");
+                    }
+                }
+            }
+            else {
+                // Show the description of the extension regardless of flags
+                if (extensionDescriptionDatabase.hasOwnProperty(moduleName) && extensionDescriptionDatabase[moduleName].hasOwnProperty(extensionName)) {
+                    // If the description is registered, show it
+                    playerChat.commandLocal(extensionDescriptionDatabase[moduleName][extensionName]);
+                }
+                else {
+                    // If it isn't, show error
+                    playerChat.commandError("Extension '" + extensionName + "' for module '" + moduleName + "' doesn't exist or it didn't register a description.");
+                }
+            }
+        },
+        "moduleHelp [moduleName [extensionName]] [-l]",
+        "Shows the description of the specified module. If extensionName is specified, the description of the extension is shown instead. If the -l flag is set, shows the list of modules (or extensions for the specified module) that have registered descriptions."
+    ),
 }
+
+
 
 
 // Init
 playerChat.internal.button = document.getElementById("playerSendButton");
 playerChat.mode = "normal";
+playerChat.lastCommandText = "";
 
 
 // Swap the confirm function for one that supports command mode
@@ -148,16 +228,30 @@ playerChat.confirm = () => {
             // Dismantle the inputted string
             let commandArguments = playerChat.internal.textInput.value.split(" ");
             let commandName = commandArguments.shift();
+            let flags = [];
+
+            for (i in commandArguments) {
+                // If any argument starts with -, put it into flags
+                if (commandArguments[i][0] == "-") {
+                    flags.push(commandArguments[i]);
+                }
+            }
+
+            // Remove every flag from the argument list
+            for (i of flags) {
+                commandArguments.splice(commandArguments.indexOf(i), 1);
+            }
             
             // If the command exists, execute it's callback
             if (commandDatabase.hasOwnProperty(commandName)) {
-                commandDatabase[commandName].callback(...commandArguments);
+                commandDatabase[commandName].callback(flags=flags, ...commandArguments);
             }
             else {
-                playerChat.internal.addChatComponent(new chatComponent("command error", "This command does not exist."));
+                playerChat.commandError("This command does not exist. To see the list of available commands, enter the help command");
             }
 
             commandModeOff();
+            playerChat.lastCommandText = playerChat.internal.textInput.value;
         }
         
         // Clear the text area
@@ -193,4 +287,41 @@ playerChat.internal.textInput.addEventListener("keydown", (ev) => {
             commandModeOff();
         }
     }
+    if (ev.key == "ArrowUp") {
+        // Load the last entered command - useful when you made a mistake when typing a command
+        commandModeOn();
+        playerChat.internal.textInput.value = playerChat.lastCommandText;
+        playerChat.internal.textInput.setSelectionRange(playerChat.lastCommandText.lenght, playerChat.lastCommandText.lenght);
+    }
 });
+
+
+// The databases for moduleHelp command
+const moduleDescriptionDatabase = {
+    chat: "The chat is a module that allows players to communicate via text messages."
+}
+const extensionDescriptionDatabase = {
+    chat: {
+        commands: "This extension provides the command functionality to the chat module."
+    }
+}
+
+// API for other modules to register their descriptions
+window.defineAPI("register module description", (args) => {
+    [moduleName, description] = args;
+
+    moduleDescriptionDatabase[moduleName] = description;
+    console.log(moduleDescriptionDatabase);
+});
+window.defineAPI("register extension description", (args) => {
+    [moduleName, extensionName, description] = args;
+
+    // If the module object hasn't been setup yet, create it
+    if (!extensionDescriptionDatabase.hasOwnProperty(moduleName)) {
+        extensionDescriptionDatabase[moduleName] = {};
+    }
+
+    (extensionDescriptionDatabase[moduleName])[extensionName] = description;
+});
+
+window.declareAsLoaded("chat", "commands");
