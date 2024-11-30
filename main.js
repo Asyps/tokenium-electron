@@ -1,5 +1,5 @@
 // Debug
-process.traceProcessWarnings = true
+process.traceProcessWarnings = true;
 
 // Imports
 const { app, BrowserWindow, ipcMain, screen } = require('electron');

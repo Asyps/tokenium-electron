@@ -90,21 +90,24 @@ const inWorldChat = {
             this.messageArea.appendChild(message);
         },
         displayCharacterHeader(characterName) {
+            // Create the header
             const header = document.createElement('div');
             header.className = 'user-header';
 
+            // Create the character picture
             const img = document.createElement('img');
             img.src = pfpDictionary[characterName];
             img.alt = characterName;
             img.className = 'user-image';
 
+            // Create the name
             const name = document.createElement('span');
             name.className = 'user-name';
             name.textContent = characterName;
 
+            // Assemble and display
             header.appendChild(img);
             header.appendChild(name);
-
             this.messageArea.appendChild(header);
         },
         displayCharacterMessage(text) {
