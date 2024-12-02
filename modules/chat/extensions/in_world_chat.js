@@ -1,18 +1,20 @@
 // Register a description
 let description = "This extension adds the in world chat. Players can send messages as their characters. This chat is intended to hold all interactions within the game world, while the player chat is for 'meta' communication.";
+window.callFunctionOnLoaded(["chat", "commands"], "register extension description", "chat", "inWorldChat", description);
 
-async function f(description) {
-    if (await window.loadEnquiry("chat", "commands")) {
-        console.log("directly registered")
+/*
+console.log(window.loadEnquiry("chat", "commands"));
+if (window.loadEnquiry("chat", "commands")) {
+    console.log("directly registered")
+    window.callFunction("chat", "register extension description", "chat", "inWorldChat", description);
+} else {
+    window.onExtensionLoaded("chat", "commands", () => {
+        console.log("scheduled to be registered")
         window.callFunction("chat", "register extension description", "chat", "inWorldChat", description);
-    } else {
-        window.onExtensionLoaded("chat", "commands", () => {
-            console.log("scheduled to be registered")
-            window.callFunction("chat", "register extension description", "chat", "inWorldChat", description);
-        });
-    }
+    });
 }
-f(description);
+*/
+
 
 
 // Alter starting html
@@ -87,7 +89,6 @@ const inWorldChatDocumentMockup = {
 }
 
 
-
 const inWorldChat = {
     internal: {
         // HTML components
@@ -97,9 +98,12 @@ const inWorldChat = {
         
         // Helper functions that add the chat components into DOM
         displaySystemMessage(text) {
+            // Create the system message
             const message = document.createElement('div');
             message.className = 'system-message';
             message.textContent = text;
+            
+            // Add it to DOM
             this.messageArea.appendChild(message);
         },
         displayCharacterHeader(characterName) {
@@ -118,15 +122,18 @@ const inWorldChat = {
             name.className = 'user-name';
             name.textContent = characterName;
 
-            // Assemble and display
+            // Assemble and add to DOM
             header.appendChild(img);
             header.appendChild(name);
             this.messageArea.appendChild(header);
         },
         displayCharacterMessage(text) {
+            // Create the character message
             const message = document.createElement('div');
             message.className = 'user-message';
             message.textContent = text;
+
+            // Add it to DOM
             this.messageArea.appendChild(message);
         },
 
@@ -148,12 +155,13 @@ const inWorldChat = {
 
     // Send the contents of the text area
     confirm() {
+        // Only do anything if there is text that can be sent
         if (this.internal.textInput.value != "") {
             // Get the name of the selected character
             let selectedCharacter = this.internal.characterInput.value;
             
-            if (inWorldChatDocumentMockup.lastMessageSender != selectedCharacter) {
-                // Add a user header unless the last message was sent by the selected character
+            // Add a user header unless the last message was sent by the selected character
+            if (inWorldChatDocumentMockup.lastMessageSender != selectedCharacter) {    
                 let header = new chatComponent("header", selectedCharacter);
 
                 this.internal.addChatComponent(header);
@@ -211,4 +219,5 @@ inWorldChat.addCharacter("character2");
 inWorldChat.addCharacter("Fred");
 inWorldChat.addCharacter("Bertha");
 
+// Declare as loaded
 window.declareAsLoaded("chat", "in_world_chat");

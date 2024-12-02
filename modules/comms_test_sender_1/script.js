@@ -13,3 +13,5 @@ function sendSystemMessageToChat() {
 function sendSystemMessageToInWorldChat() {
     window.callFunction("chat", "in world chat system message", "Message from sender 1");
 }
+
+window.declareAsLoaded("comms_test_sender_1");

@@ -485,3 +485,5 @@ tokenium.meta.container.addEventListener("mousemove", (ev) => {
     }
 });
 */
+
+window.declareAsLoaded("tokenium");

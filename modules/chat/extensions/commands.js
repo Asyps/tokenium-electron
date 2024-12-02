@@ -100,13 +100,14 @@ class command {
     }
 }
 
+// The database that stores all commands
 const commandDatabase = {
     help: new command(
         (flags, commandName) => {
             if (commandName == undefined) {
+                // If no commandName is defined, display a manual to use the command systen and a list of available commands
                 playerChat.commandLocal("To get into command mode, press / when the text field is empty. The character / won't appear in the text area. To cancel command mode, press packspace when the input field is empty.");
                 playerChat.commandLocal("The blue box is a local command output that other players won't see and that will not persist between sessions.");
-
                 // Add the next line directly to chat to not synchronise it between players, because it serves as an example only
                 playerChat.internal.addChatComponent(new chatComponent("command public", "The green box is a public command output that other players will see and that persists between sessions."));
                 playerChat.commandError("The red box is a local command output that signifies an error.");
@@ -118,13 +119,16 @@ const commandDatabase = {
                 }
                 commandListStr = commandListStr.slice(0, -2);        // Remove the last "; " characters from the string
 
+                // Show the list of commands
                 playerChat.commandLocal(commandListStr);
             }
             else if (commandDatabase.hasOwnProperty(commandName)) {
+                // If the specified command exists, show it's syntax info and description
                 playerChat.commandLocal(commandDatabase[commandName].syntaxInfo);
                 playerChat.commandLocal(commandDatabase[commandName].description);
             }
             else {
+                // If it doesn't, show an error
                 playerChat.commandError("The specified command '" + commandName + "' does not exist.");
             }
         },
@@ -324,4 +328,5 @@ window.defineAPI("register extension description", (args) => {
     (extensionDescriptionDatabase[moduleName])[extensionName] = description;
 });
 
+// Declare as loaded
 window.declareAsLoaded("chat", "commands");

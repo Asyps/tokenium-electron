@@ -40,9 +40,12 @@ const playerChat = {
         
         // Helper functions that add the chat components into DOM
         displaySystemMessage(text) {
+            // Create the system message
             const message = document.createElement('div');
             message.className = 'system-message';
             message.textContent = text;
+
+            // Add it to DOM
             this.messageArea.appendChild(message);
         },
         displayUserHeader(userName) {
@@ -67,9 +70,12 @@ const playerChat = {
             this.messageArea.appendChild(header);
         },
         displayUserMessage(text) {
+            // Create the user message
             const message = document.createElement('div');
             message.className = 'user-message';
             message.textContent = text;
+
+            // Add it to DOM
             this.messageArea.appendChild(message);
         },
 
@@ -139,4 +145,5 @@ for (i of chatDocumentMockup.chatMessages) {
     playerChat.internal.addChatComponent(i);
 }
 
+// Declare as loaded
 window.declareAsLoaded("chat");

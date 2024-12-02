@@ -336,6 +336,7 @@ ipcMain.handle("getModuleList", async () => await fileSystem.getAvailableModules
 ipcMain.handle("getSelectedModules", (ev, gameName) => games[gameName]);
 ipcMain.handle("setSelectedModules", (ev, gameName, moduleList) => games[gameName] = moduleList);
 
+
 var active_windows = {};
 ipcMain.handle("loadGame", async (ev, gameName) => {
     // Set variables
@@ -423,7 +424,10 @@ ipcMain.handle("loadGame", async (ev, gameName) => {
     globals.mainMenu.close();
 }); 
 
-// Communication system handler
+
+// Communication system
+
+// Handles requests to call API functions
 ipcMain.handle("callFunction", (ev, moduleName, functionName, args) => {
     // Empty module name => broadcast
     if (moduleName == "") {
@@ -450,7 +454,7 @@ ipcMain.handle("callFunction", (ev, moduleName, functionName, args) => {
 });
 
 const loadedModules = {}
-
+// Handles questions about loaded modules or extensions
 ipcMain.handle("moduleLoadEnquiry", (ev, moduleName, extensionName) => {
     if (extensionName == undefined) {
         return loadedModules.hasOwnProperty(moduleName);
@@ -458,6 +462,7 @@ ipcMain.handle("moduleLoadEnquiry", (ev, moduleName, extensionName) => {
     else return loadedModules[moduleName].includes(extensionName);
 });
 
+// Handles requests to announce that a module has been loaded
 ipcMain.handle("moduleLoadNotice", (ev, moduleName, extensionName) => {
     if (extensionName == undefined) {
         // If extensionName is undefined, process the event for a module
@@ -473,6 +478,7 @@ ipcMain.handle("moduleLoadNotice", (ev, moduleName, extensionName) => {
     // Broadcast the load event
     for (i in active_windows) {
         try {
+            console.log("Calling onload for", eventName, i)
             active_windows[i].webContents.send("LOAD-" + eventName);
         }
         catch {
