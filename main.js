@@ -17,6 +17,13 @@ app.on("window-all-closed", () => {
     }
 });
 
+// Class for handling modules
+class moduleInfo {
+    constructor(name, extensions) {
+        this.name = name;
+        this.extensions = extensions;
+    }
+};
 
 // Main menu
 app.whenReady().then(() => {
@@ -57,13 +64,42 @@ app.whenReady().then(() => {
     });
 });
 
-// Class for handling modules
-class moduleInfo {
-    constructor(name, extensions) {
-        this.name = name;
-        this.extensions = extensions;
+
+
+
+/*
+// Showcase of server's functionality
+class Block {}
+
+class StringSerializer {
+    write(value, buffer);
+    read(buffer);
+}
+
+
+class JSONMSerializer {
+    write(value, buffer) {
+        StringSerializer.write(JSON.stringify(value), buffer);
+    }
+    read(buffer) {
+        return JSON.parse(StringSerializer.read(buffer));
     }
 }
+
+const doc = new Block().asDocument({
+    name: StringSerializer,
+    hp: Float64Serializer
+});
+
+doc.onChange("name", x => {
+    console.log(x);
+});
+
+doc.name = "456";
+await doc.flush();
+*/
+
+
 
 // Mockup, will later get the info from server/files/whatever
 let games = {
