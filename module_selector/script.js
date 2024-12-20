@@ -85,7 +85,6 @@ async function generateOptions() {
 
     // Applying currently selected modules
     for (i of selectedModules) {
-        console.log(i);
         // Check the module
         let moduleCheckbox = document.getElementById(i.name);
         moduleCheckbox.checked = true;

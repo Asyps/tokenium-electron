@@ -6,12 +6,13 @@ const { app, BrowserWindow, ipcMain, screen } = require('electron');
 const fs = require("fs/promises");
 const path = require("path");
 
-// a place to put the main process global variables
+// A place to put the main process global variables
 globals = {};
 
 // Close the application when all windows are closed
 app.on("window-all-closed", () => {
     if (process.platform != "darwin") {
+        // If a game is chosen, save the window layout
         if (globals.gameName) fileSystem.saveWindowLayout();
         app.quit();
     }
@@ -39,6 +40,7 @@ app.whenReady().then(() => {
         }
     });
 
+    // Load the .js
     globals.mainMenu.loadFile(path.join(__dirname, "main_menu", "index.html"));
 
     // Handler for the module selector window
@@ -63,42 +65,6 @@ app.whenReady().then(() => {
         }
     });
 });
-
-
-
-
-/*
-// Showcase of server's functionality
-class Block {}
-
-class StringSerializer {
-    write(value, buffer);
-    read(buffer);
-}
-
-
-class JSONMSerializer {
-    write(value, buffer) {
-        StringSerializer.write(JSON.stringify(value), buffer);
-    }
-    read(buffer) {
-        return JSON.parse(StringSerializer.read(buffer));
-    }
-}
-
-const doc = new Block().asDocument({
-    name: StringSerializer,
-    hp: Float64Serializer
-});
-
-doc.onChange("name", x => {
-    console.log(x);
-});
-
-doc.name = "456";
-await doc.flush();
-*/
-
 
 
 // Mockup, will later get the info from server/files/whatever
@@ -154,7 +120,7 @@ const fileSystem = {
                 }
 
                 if (hasExtensions) {
-                    // Cycle through the extensions
+                    // If the module has extensions, cycle through them
                     for await (const extensionDirent of extensionsDir) {
                         extensionName = extensionDirent.name;
 
@@ -347,6 +313,7 @@ const fileSystem = {
         let filePath = path.join(__dirname, "games", globals.gameName, "window_layout.json");
 
         try {
+            // Read, parse and return the data
             let rawData = await fs.readFile(filePath, {encoding: "utf-8"});
             return JSON.parse(rawData);
         }
@@ -372,7 +339,7 @@ ipcMain.handle("getModuleList", async () => await fileSystem.getAvailableModules
 ipcMain.handle("getSelectedModules", (ev, gameName) => games[gameName]);
 ipcMain.handle("setSelectedModules", (ev, gameName, moduleList) => games[gameName] = moduleList);
 
-
+// Load game procedure
 var active_windows = {};
 ipcMain.handle("loadGame", async (ev, gameName) => {
     // Set variables
@@ -514,7 +481,6 @@ ipcMain.handle("moduleLoadNotice", (ev, moduleName, extensionName) => {
     // Broadcast the load event
     for (i in active_windows) {
         try {
-            console.log("Calling onload for", eventName, i)
             active_windows[i].webContents.send("LOAD-" + eventName);
         }
         catch {

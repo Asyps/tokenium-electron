@@ -1,4 +1,3 @@
-// Imports
 const { ipcRenderer, contextBridge } = require("electron");
 
 // Exposing functions to access main process utilities

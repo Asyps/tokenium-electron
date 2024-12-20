@@ -80,14 +80,18 @@ playerChat.internal.addChatComponent = (component) => {
 // Shortcut functions for command outputs
 playerChat.commandLocal = (text) => {
     playerChat.internal.addChatComponent(new chatComponent("command local", text));
+    // Don't include the output in shared document
 }
 playerChat.commandPublic = (text) => {
     publicOut = new chatComponent("command public", text);
     playerChat.internal.addChatComponent(publicOut);
+    
+    // Do include the output in shared document
     chatDocumentMockup.push(publicOut);
 }
 playerChat.commandError = (text) => {
     playerChat.internal.addChatComponent(new chatComponent("command error", text));
+    // Don't include the output in shared document
 }
 
 
@@ -157,7 +161,7 @@ const commandDatabase = {
             else if (extensionName == undefined) {
                 // If no extensionName is specified
                 if (flags.includes("-l")) {
-                    // If the -l flag is set, display list of extensions for this module
+                    // If the -l flag is set, display list of extensions for the specified module
                     if (extensionDescriptionDatabase.hasOwnProperty(moduleName)) {
                         let extensionString = "Extensions for '" + moduleName + "' with available descriptions: ";
                         for (i in extensionDescriptionDatabase[moduleName]) {

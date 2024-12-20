@@ -1,4 +1,3 @@
-// Imports
 const { ipcRenderer, contextBridge } = require("electron");
 
 // Expose a function to access game list

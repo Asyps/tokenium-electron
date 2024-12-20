@@ -40,6 +40,7 @@ contextBridge.exposeInMainWorld("onLoaded", (callback, moduleName, extensionName
 // Function to call an API function from another module on startup without worries about load loader
 // This function combines the behavior of callFunction, loadEnquiry and onLoaded (kinda)
 contextBridge.exposeInMainWorld("callFunctionOnLoaded", async (moduleExtensionPair, functionName, ...args) => {
+    // Process arguments
     if (Array.isArray(moduleExtensionPair)) {
         // If moduleExtensionPair is an array, destructure it
         var [moduleName, extensionName] = moduleExtensionPair;
@@ -65,5 +66,5 @@ contextBridge.exposeInMainWorld("callFunctionOnLoaded", async (moduleExtensionPa
 });
 
 // The onLoaded as it is now has a diffirent behavior than callFunctionOnLoaded because it allows any block of code to be run after the module is loaded
-// while callFunctionOnLoaded is designed specifically for API calls. Therefore it might stay, but currently has no use in the program.
+// while callFunctionOnLoaded is designed specifically for inter-module API calls. Therefore it might stay, but currently has no use in the program.
 // But loadEnquiry might not be useful at all so it might be deleted unless an use is found.
