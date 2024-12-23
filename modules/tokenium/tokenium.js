@@ -1,3 +1,7 @@
+// Register a description
+let description = "This module is the key visual space of any game. The tokenium allows you to add a background, add tokens, and move them. Tokenium can be scrolled and panned. This module also includes a built in grid functionality.";
+window.callFunctionOnLoaded(["chat", "commands"], "register module description", "tokenium", description);
+
 // Helper functions
 function px(number) {
     // Changes the inputted value to a px value
@@ -8,6 +12,11 @@ function unpx(pixels) {
     value = Number.parseFloat(pixels);
     if (isNaN(value)) return 0;
     else return value;
+}
+function grid(number) {
+    // Converts grid units to pixels
+    if (tokenium.grid.gridSize == null) return number * 64; // Default value
+    else return number * tokenium.grid.gridSize;
 }
 
 // Temporary stuff (will later be managed by other front end systems like character manager)
@@ -43,10 +52,22 @@ const tokenium = {
         panStatus: false,
         
         // Function to project a point from absolute window coordinates to the relative tokenium coordinates (coordinates within the tokenium without effects of pan and zoom)
-        projectPoint(coords) {
+        projectPoint(coords, snapMode="no snap") {
             let logicalX = coords.x * this.Z - (this.Z - 1) * 0.5 * this.width - this.position.x;
             let logicalY = coords.y * this.Z - (this.Z - 1) * 0.5 * this.height - this.position.y;
             
+            // If snapping is on and grid is on, snap the coordinates
+            if (snapMode != "no snap" && tokenium.grid.gridSize != null) {
+                logicalX -= logicalX % tokenium.grid.gridSize;
+                logicalY -= logicalY % tokenium.grid.gridSize;
+                
+                // If the snapping mode is center, move the coordinates to the center
+                if (snapMode == "center") {
+                    logicalX += tokenium.grid.gridSize * 0.5;
+                    logicalY += tokenium.grid.gridSize * 0.5;
+                }
+            }
+
             return { x: logicalX, y: logicalY };
         },
 
@@ -57,11 +78,11 @@ const tokenium = {
     },
 
     dragHandler: {
-        // Is an object currently dragged?
+        // Is an object currently being dragged?
         dragStatus: false,
 
         // Currently dragged object
-        dragObject: 0,
+        dragObject: null,
 
         // A function that initiates the dragging procedure of a token - gets added to the token's mousedown event if the token should be draggable
         beginDrag(ev) {
@@ -97,10 +118,35 @@ const tokenium = {
     grid: {
         // DOM elements
         canvas: document.getElementById("gridLayer"),
-        get ctx() { return this.canvas.getContext("2d") },
+        ctx: document.getElementById("gridLayer").getContext("2d"),
 
         // Grid size
-        gridSize: 64
+        gridSize: null,
+
+        redraw() {
+            // Clear the grid
+            this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+            
+            if (this.gridSize != null) {
+                // Only redraw the grid if it's turned on
+                this.ctx.beginPath();
+
+                // Redraw the vertical lines
+                for (let i = this.gridSize; i < this.canvas.width; i += this.gridSize) {
+                    this.ctx.moveTo(i, 0);
+                    this.ctx.lineTo(i, this.canvas.height);
+                }
+
+                // Redraw the horizontal lines
+                for (let i = this.gridSize; i < this.canvas.height; i += this.gridSize) {
+                    this.ctx.moveTo(0, i);
+                    this.ctx.lineTo(this.canvas.width, i);
+                }
+
+                // Apply the redraw
+                this.ctx.stroke();
+            }
+        }
     },
 
     tokens: {
@@ -112,7 +158,7 @@ const tokenium = {
         tokenNameList: [],
 
         // Function to add a new token
-        addToken(name, x, y) {
+        addToken(name, x, y, width=null, height=null) {
             // Create the DOM objects
             let logicalToken = document.createElement("img");
             let visualToken = document.createElement("img");
@@ -134,12 +180,14 @@ const tokenium = {
             logicalToken.id = name + " logical";
             visualToken.id = name + " visual";
 
-            // Setting sizes
-            logicalToken.width = visualToken.width = logicalToken.height = visualToken.height = tokenium.grid.gridSize;
+            // Setting height and width
+            // If argument is specified and valid, use argument. Else if grid is turned off, use default value. Otherwise use grid size
+            logicalToken.width = visualToken.width   = (width > 7) ? width : (tokenium.grid.gridSize == null) ? 64 : tokenium.grid.gridSize;
+            logicalToken.height = visualToken.height = (height > 7) ? height : (tokenium.grid.gridSize == null) ? 64 : tokenium.grid.gridSize;
 
-            // Setting positions
-            logicalToken.style.top = visualToken.style.top = px(y * tokenium.grid.gridSize);
-            logicalToken.style.left = visualToken.style.left = px(x * tokenium.grid.gridSize);
+            // Setting position                                      Is grid turned off?
+            logicalToken.style.left = visualToken.style.left = px(x);
+            logicalToken.style.top = visualToken.style.top = px(y);
 
             // Set the CSS classes
             logicalToken.setAttribute("class", "logicalTokenLayer");
@@ -188,38 +236,27 @@ window.defineAPI("changeTokeniumSize", (args) => {
     // Change the size of the grid canvas
     tokenium.grid.canvas.setAttribute("width", width);
     tokenium.grid.canvas.setAttribute("height", height);
+
+    // Redraw the grid
+    tokenium.grid.redraw();
 });
 
 // API to change the size of a grid cell
 window.defineAPI("changeGridSize", (args) => {
-    [newCellSize] = args;
+    [newCellSize] = args;   // If newCellSize is null, the grid is turned off
 
-    tokenium.grid.gridSize = newCellSize;
+    // If the newCellSize is too small or null, turn off the grid
+    if (newCellSize < 8) tokenium.grid.gridSize = null;
+    else tokenium.grid.gridSize = newCellSize;
 
-    // Clear the grid
-    tokenium.grid.ctx.clearRect(0, 0, tokenium.grid.canvas.width, tokenium.grid.canvas.height);
-    tokenium.grid.ctx.beginPath();
-
-    // Redraw the vertical lines
-    for (let i = newCellSize; i < tokenium.grid.canvas.width; i += newCellSize) {
-        tokenium.grid.ctx.moveTo(i, 0);
-        tokenium.grid.ctx.lineTo(i, tokenium.grid.canvas.height);
-    }
-
-    // Redraw the horizontal lines
-    for (let i = newCellSize; i < tokenium.grid.canvas.height; i += newCellSize) {
-        tokenium.grid.ctx.moveTo(0, i);
-        tokenium.grid.ctx.lineTo(tokenium.grid.canvas.width, i);
-    }
-
-    // Apply the redraw
-    tokenium.grid.ctx.stroke();
+    // Redraw the grid
+    tokenium.grid.redraw();
 });
 
 
 // Event for zooming in the tokenium
 tokenium.meta.container.addEventListener("wheel", (ev) => {
-    // Only apply the change if the zoom Z value would get smaller while it's above it's minimum, or the equivalent
+    // Only apply the change if the Z value would get smaller while it's above it's minimum, or the equivalent
     if (tokenium.meta.Z > tokenium.meta.zoomLimits.min && Math.sign(ev.deltaY) == 1 || tokenium.meta.Z < tokenium.meta.zoomLimits.max && Math.sign(ev.deltaY) == -1) {
         tokenium.meta.Z *= 0.9 ** Math.sign(ev.deltaY);
     }
@@ -264,16 +301,16 @@ window.addEventListener("mouseup", (ev) => {
 tokenium.meta.container.addEventListener("mousemove", (ev) => {
     // If a token is being dragged, apply movement
     if (tokenium.dragHandler.dragStatus) {
-        if (ev.ctrlKey) {
-            // If control is held, move the token along with the mouse
+        if (ev.ctrlKey || tokenium.grid.gridSize == null) {
+            // If control is held or if grid is turned off, move the token along with the mouse
             tokenium.dragHandler.dragObject.style.left = px(unpx(tokenium.dragHandler.dragObject.style.left) + ev.movementX * tokenium.meta.Z);
             tokenium.dragHandler.dragObject.style.top = px(unpx(tokenium.dragHandler.dragObject.style.top) + ev.movementY * tokenium.meta.Z);
-        } 
+        }
         else {
-            // If it's not held, snap token to grid
-            let projectedMouse = tokenium.meta.projectPoint({x: ev.clientX, y: ev.clientY});
-            tokenium.dragHandler.dragObject.style.left = px(projectedMouse.x - projectedMouse.x % tokenium.grid.gridSize);
-            tokenium.dragHandler.dragObject.style.top = px(projectedMouse.y - projectedMouse.y % tokenium.grid.gridSize);
+            // Else snap token to grid
+            let projectedMouse = tokenium.meta.projectPoint({x: ev.clientX, y: ev.clientY}, "corner");
+            tokenium.dragHandler.dragObject.style.left = px(projectedMouse.x);
+            tokenium.dragHandler.dragObject.style.top = px(projectedMouse.y);
         }
     }
 });

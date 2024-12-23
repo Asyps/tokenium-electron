@@ -429,12 +429,12 @@ ipcMain.handle("loadGame", async (ev, gameName) => {
 // Communication system
 
 // Handles requests to call API functions
-ipcMain.handle("callFunction", (ev, moduleName, functionName, args) => {
+ipcMain.handle("callFunction", async (ev, moduleName, functionName, args) => {
     // Empty module name => broadcast
     if (moduleName == "") {
         for (i in active_windows) {
             try {
-                active_windows[i].webContents.send("API-" + functionName, args);
+                await active_windows[i].webContents.send("API-" + functionName, args);
             }
             catch {
                 throw new Error("Module's window was closed.");
@@ -444,7 +444,7 @@ ipcMain.handle("callFunction", (ev, moduleName, functionName, args) => {
     }
     else {
         try {
-            active_windows[moduleName].webContents.send("API-" + functionName, args);
+            await active_windows[moduleName].webContents.send("API-" + functionName, args);
         }
         catch {
             throw new Error("Module is not loaded or it's window was closed.");
