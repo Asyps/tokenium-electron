@@ -22,13 +22,13 @@ contextBridge.exposeInMainWorld("declareAsLoaded", (moduleName, extensionName) =
 
 
 // Function to enquire if a module is loaded (needs an await before it when used)
-// Might get deleted, see bottom of the program
+// Might get deleted, see note at the bottom of the program
 contextBridge.exposeInMainWorld("loadEnquiry", async (moduleName, extensionName) => {
     return ipcRenderer.invoke("moduleLoadEnquiry", moduleName, extensionName);
 });
 
 // Function to set a listener for module/extension load event
-// Might get deleted, see bottom of the program
+// Might get deleted, see note at the bottom of the program
 contextBridge.exposeInMainWorld("onLoaded", (callback, moduleName, extensionName) => {
     let loadName = (extensionName == undefined) ? moduleName : moduleName + ":" + extensionName;
 
@@ -68,3 +68,6 @@ contextBridge.exposeInMainWorld("callFunctionOnLoaded", async (moduleExtensionPa
 // The onLoaded as it is now has a diffirent behavior than callFunctionOnLoaded because it allows any block of code to be run after the module is loaded
 // while callFunctionOnLoaded is designed specifically for inter-module API calls. Therefore it might stay, but currently has no use in the program.
 // But loadEnquiry might not be useful at all so it might be deleted unless an use is found.
+
+// Possible TO-DO - change all method arguments that specify a module and an extension to the moduleExtensionPair format - to have consistent arguments
+// The one place where moduleExtensionPair is currently used requires it

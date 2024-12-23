@@ -1,139 +1,69 @@
-// helper functions
+// Helper functions
 function px(number) {
+    // Changes the inputted value to a px value
     return number.toString() + "px";
 }
 function unpx(pixels) {
+    // Changes the inputted string value to a float
     value = Number.parseFloat(pixels);
     if (isNaN(value)) return 0;
     else return value;
 }
 
-// temporary stuff (will later be managed by other front end systems like character manager)
+// Temporary stuff (will later be managed by other front end systems like character manager)
 var imgDict = {
     "Dave": "../../games/desert/assets/Dave.png"
 }
 const playerColor = "#00FFFF";
 
-/*
-// class arrow
-class Arrow {
-    constructor(start, end, color) {
-        this.start = start;
-        this.end = end;
-        this.color = color;
-
-        let flapAngle = Math.PI / 6;
-        let flapLenght = 10;
-
-        let angle = Math.atan2(start.y - end.y, start.x - end.x);
-
-        this.flap1 = {
-            x: Math.cos(angle + flapAngle) * flapLenght + end.x,
-            y: Math.sin(angle + flapAngle) * flapLenght + end.y
-        };
-        this.flap2 = {
-            x: Math.cos(angle - flapAngle) * flapLenght + end.x,
-            y: Math.sin(angle - flapAngle) * flapLenght + end.y
-        };
-    }
-}
-*/
 
 const tokenium = {
     meta: {
-        viewport: document.getElementById("tokenium viewport"),
+        // DOM elements
         container: document.getElementById("tokenium container"),
 
+        // Tokenium size in px
         width: 512,
         height: 512,
 
-        /*
-        changeTokeniumSize(width, height) {
-            this.viewport.style.setProperty("width", px(width));
-            this.viewport.style.setProperty("height", px(height));
-            this.container.style.setProperty("width", px(width));
-            this.container.style.setProperty("height", px(height));
-            tokenium.tokens.logicalContainer.style.setProperty("width", px(width));
-            tokenium.tokens.logicalContainer.style.setProperty("height", px(height));
-            tokenium.tokens.visualContainer.style.setProperty("width", px(width));
-            tokenium.tokens.visualContainer.style.setProperty("height", px(height));
-
-            tokenium.grid.canvas.setAttribute("width", width);
-            tokenium.grid.canvas.setAttribute("height", height);
-            //tokenium.ruler.canvas.setAttribute("width", width);
-            //tokenium.ruler.canvas.setAttribute("height", height);
-
-            this.width = width;
-            this.height = height;
-        },
-        */
-
-        changeTokeniumSize(width, height) {
-            document.dispatchEvent(new CustomEvent("changeTokeniumSize", {
-                detail: {
-                    width: width,
-                    height: height
-                }
-            }));
-        },
-
-        divOffset: {
-            x: unpx(document.getElementById("tokenium viewport").style.left),
-            y: unpx(document.getElementById("tokenium viewport").style.top)
-        },
-
+        // Data about tokenium pan and zoom
         position: {
             x: 0,
             y: 0
         },
         Z: 1,
 
-        projectPoint(coords, snapToCenter=null) {
-            const centerX = this.width * 0.5;
-            const centerY = this.height * 0.5;
-            let logicalX = (coords.x - this.divOffset.x - centerX) * this.Z + centerX - this.position.x;
-            let logicalY = (coords.y - this.divOffset.y - centerY) * this.Z + centerY - this.position.y;
+        // Limits to zooming
+        zoomLimits: {
+            max: 2,
+            min: 0.5
+        },
+        
+        // Is tokenium being panned?
+        panStatus: false,
+        
+        // Function to project a point from absolute window coordinates to the relative tokenium coordinates (coordinates within the tokenium without effects of pan and zoom)
+        projectPoint(coords) {
+            let logicalX = coords.x * this.Z - (this.Z - 1) * 0.5 * this.width - this.position.x;
+            let logicalY = coords.y * this.Z - (this.Z - 1) * 0.5 * this.height - this.position.y;
             
-            if (snapToCenter != null) {
-                if (logicalX == tokenium.meta.width) logicalX -= 1;
-                if (logicalY == tokenium.meta.height) logicalY -= 1;
-
-                logicalX -= logicalX % tokenium.grid.gridSize;
-                logicalY -= logicalY % tokenium.grid.gridSize;
-            }
-
-            if (snapToCenter == true) {
-                logicalX += tokenium.grid.gridSize * 0.5;
-                logicalY += tokenium.grid.gridSize * 0.5;
-            }
             return { x: logicalX, y: logicalY };
         },
 
+        // Apply the current position and zoom values to the DOM
         applyTransform() {
             this.container.style.transform = "scale(" + 1 / this.Z + ") translate(" + px(this.position.x) + ", " + px(this.position.y) + ")";
         },
-
-        panStatus: false,
-        panStart: {
-            x: 0,
-            y: 0
-        },
-        
     },
 
     dragHandler: {
+        // Is an object currently dragged?
         dragStatus: false,
-        setCtrlOffset: true,
-        dragStart: {
-            x: 0,
-            y: 0
-        },
-        dragObject: 0,
-        dragOffset: {
-            x: 0,
-            y: 0
-        },
 
+        // Currently dragged object
+        dragObject: 0,
+
+        // A function that initiates the dragging procedure of a token - gets added to the token's mousedown event if the token should be draggable
         beginDrag(ev) {
             if (ev.button == 0) {
                 ev.preventDefault();
@@ -142,35 +72,17 @@ const tokenium = {
                 
                 tokenium.dragHandler.dragStatus = true;
                 tokenium.dragHandler.dragObject = ev.target;
-
-                if (!ev.ctrlKey) var gridSnap = false;
-                tokenium.dragHandler.dragStart = tokenium.meta.projectPoint({x: ev.pageX, y: ev.pageY}, gridSnap);
             }
-        }
-    },
-
-    settings: {
-        zoomLimits: {
-            max: 2,
-            min: 0.5
-        },
-
-        checkLimits(value, limit) {
-            if (value < limit.min) {
-                value = limit.min;
-            }
-            else if (value > limit.max) {
-                value = limit.max;
-            }
-            return value;
         }
     },
 
     background: {
+        // DOM elements
         container: document.getElementById("backgroundLayer"),
 
+        // A function to add an image to the background
         addBackgroundImage(path, height, width, positionX = 0, positionY = 0) {
-            img = document.createElement("img");
+            let img = document.createElement("img");
 
             img.src = path;
             img.height = height;
@@ -183,42 +95,33 @@ const tokenium = {
     },
 
     grid: {
+        // DOM elements
         canvas: document.getElementById("gridLayer"),
         get ctx() { return this.canvas.getContext("2d") },
 
-        changeGridSize(size) {
-            this.gridSize = size;
-
-            // clear grid
-            this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-
-            // redraw grid
-            for (let i = size; i < this.canvas.width; i += size) {
-                this.ctx.moveTo(i, 0);
-                this.ctx.lineTo(i, this.canvas.height);
-            }
-            for (let i = size; i < this.canvas.height; i += size) {
-                this.ctx.moveTo(0, i);
-                this.ctx.lineTo(this.canvas.width, i);
-            }
-            this.ctx.stroke();
-        },
+        // Grid size
+        gridSize: 64
     },
 
     tokens: {
+        // DOM elements
         logicalContainer: document.getElementById("tokenLogicalLayer"),
         visualContainer: document.getElementById("tokenVisualLayer"),
+
+        // A list of token names that are already in use
         tokenNameList: [],
 
+        // Function to add a new token
         addToken(name, x, y) {
-            logicalToken = document.createElement("img");
-            visualToken = document.createElement("img");
+            // Create the DOM objects
+            let logicalToken = document.createElement("img");
+            let visualToken = document.createElement("img");
 
-            // image
+            // Set images
             logicalToken.src = visualToken.src = imgDict[name];
 
-            // name
-            // appends " (n)" for duplicte ids (will later get replaced by character manager throwing a rename prompt if the id is duplicate, maybe this will stay as a safeguard)
+            // Set names
+            // Appends " (n)" for duplicte ids (will later get replaced by character manager throwing a rename prompt if the id is duplicate, maybe this will stay as a safeguard)
             let n = 1
             while (this.tokenNameList.includes(name)) {
                 if (n == 1) name += " (1)";
@@ -227,27 +130,31 @@ const tokenium = {
             }
             this.tokenNameList += name;
             
+            // Setting IDs
             logicalToken.id = name + " logical";
             visualToken.id = name + " visual";
 
-            // size
+            // Setting sizes
             logicalToken.width = visualToken.width = logicalToken.height = visualToken.height = tokenium.grid.gridSize;
 
-            // position
+            // Setting positions
             logicalToken.style.top = visualToken.style.top = px(y * tokenium.grid.gridSize);
             logicalToken.style.left = visualToken.style.left = px(x * tokenium.grid.gridSize);
 
+            // Set the CSS classes
             logicalToken.setAttribute("class", "logicalTokenLayer");
             visualToken.setAttribute("class", "visualTokenLayer");
 
-            // drag and drop
+            // Drag and drop functionality
             logicalToken.addEventListener("mousedown", tokenium.dragHandler.beginDrag);
             logicalToken.setAttribute("visualToken", visualToken.id);
 
+            // Add the tokens to DOM
             this.logicalContainer.appendChild(logicalToken);
             this.visualContainer.appendChild(visualToken);
         },
 
+        // Deletes the token with the given name
         removeToken(name) {
             if (this.tokenNameList.includes(name)) { 
                 document.getElementById(name + " logical").remove();
@@ -255,235 +162,121 @@ const tokenium = {
                 this.tokenNameList.remove(name);
             }
         }
-    },
-/*
-    ruler: {
-        canvas: document.getElementById("rulerLayer"),
-        get ctx() { return this.canvas.getContext("2d"); },
-
-        measureStatus: "idle",
-
-        myArrows: [],
-        otherArrows: [],
-
-        currentArrowStart: {},
-        currentArrowEnd: {},
-
-        endMeasuring() {
-            tokenium.ruler.measureStatus = "idle";
-
-            tokenium.ruler.myArrows = [];
-            tokenium.ruler.updateCanvas();
-        },
-
-        updateCanvas() {
-            this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-            this.ctx.lineWidth = 5;
-
-            for (const arrow of this.myArrows.concat(this.otherArrows)) {
-                if (arrow.start.x != arrow.end.x || arrow.start.y != arrow.end.y) {
-                    this.ctx.strokeStyle = arrow.color;
-
-                    this.ctx.beginPath();
-
-                    this.ctx.moveTo(arrow.flap1.x, arrow.flap1.y);
-                    this.ctx.lineTo(arrow.end.x, arrow.end.y);
-                    this.ctx.lineTo(arrow.flap2.x, arrow.flap2.y);
-
-                    this.ctx.moveTo(arrow.start.x, arrow.start.y);
-                    this.ctx.lineTo(arrow.end.x, arrow.end.y)
-
-                    this.ctx.stroke();
-                }
-            }
-        },
-    },
-*/
+    }
 }
 
-/*
-// key press handler
-var pressedKeys = {};
-tokenium.meta.viewport.addEventListener("keyup", function(e) { pressedKeys[e.code] = false });
-tokenium.meta.viewport.addEventListener("keydown", function(e) { pressedKeys[e.code] = true });
-*/
 
-// resizing event
-document.addEventListener("changeTokeniumSize", (e) => {
-    tokenium.meta.viewport.style.setProperty("width", px(e.detail.width));
-    tokenium.meta.viewport.style.setProperty("height", px(e.detail.height));
-    tokenium.meta.container.style.setProperty("width", px(e.detail.width));
-    tokenium.meta.container.style.setProperty("height", px(e.detail.height));
-    tokenium.tokens.logicalContainer.style.setProperty("width", px(e.detail.width));
-    tokenium.tokens.logicalContainer.style.setProperty("height", px(e.detail.height));
-    tokenium.tokens.visualContainer.style.setProperty("width", px(e.detail.width));
-    tokenium.tokens.visualContainer.style.setProperty("height", px(e.detail.height));
+// API to resize the canvas
+window.defineAPI("changeTokeniumSize", (args) => {
+    [width, height] = args;
 
-    tokenium.grid.canvas.setAttribute("width", e.detail.width);
-    tokenium.grid.canvas.setAttribute("height", e.detail.height);
+    tokenium.meta.width = width,
+    tokenium.meta.height = height,
+
+    // Change the size of the tokenium container
+    tokenium.meta.container.style.setProperty("width", px(width));
+    tokenium.meta.container.style.setProperty("height", px(height));
+
+    // Change the size of the container for logical tokens
+    tokenium.tokens.logicalContainer.style.setProperty("width", px(width));
+    tokenium.tokens.logicalContainer.style.setProperty("height", px(height));
+    
+    // Change the size of the container for visual tokens
+    tokenium.tokens.visualContainer.style.setProperty("width", px(width));
+    tokenium.tokens.visualContainer.style.setProperty("height", px(height));
+
+    // Change the size of the grid canvas
+    tokenium.grid.canvas.setAttribute("width", width);
+    tokenium.grid.canvas.setAttribute("height", height);
+});
+
+// API to change the size of a grid cell
+window.defineAPI("changeGridSize", (args) => {
+    [newCellSize] = args;
+
+    tokenium.grid.gridSize = newCellSize;
+
+    // Clear the grid
+    tokenium.grid.ctx.clearRect(0, 0, tokenium.grid.canvas.width, tokenium.grid.canvas.height);
+    tokenium.grid.ctx.beginPath();
+
+    // Redraw the vertical lines
+    for (let i = newCellSize; i < tokenium.grid.canvas.width; i += newCellSize) {
+        tokenium.grid.ctx.moveTo(i, 0);
+        tokenium.grid.ctx.lineTo(i, tokenium.grid.canvas.height);
+    }
+
+    // Redraw the horizontal lines
+    for (let i = newCellSize; i < tokenium.grid.canvas.height; i += newCellSize) {
+        tokenium.grid.ctx.moveTo(0, i);
+        tokenium.grid.ctx.lineTo(tokenium.grid.canvas.width, i);
+    }
+
+    // Apply the redraw
+    tokenium.grid.ctx.stroke();
 });
 
 
+// Event for zooming in the tokenium
+tokenium.meta.container.addEventListener("wheel", (ev) => {
+    // Only apply the change if the zoom Z value would get smaller while it's above it's minimum, or the equivalent
+    if (tokenium.meta.Z > tokenium.meta.zoomLimits.min && Math.sign(ev.deltaY) == 1 || tokenium.meta.Z < tokenium.meta.zoomLimits.max && Math.sign(ev.deltaY) == -1) {
+        tokenium.meta.Z *= 0.9 ** Math.sign(ev.deltaY);
+    }
 
-
-// scrolling the tokenium
-tokenium.meta.viewport.addEventListener("wheel", (ev) => {
-    // change the zoom level
-    tokenium.meta.Z = 1 / (1 / tokenium.meta.Z + Math.sign(ev.deltaY) * 0.1);
-    tokenium.meta.Z = tokenium.settings.checkLimits(tokenium.meta.Z, tokenium.settings.zoomLimits)
+    // Apply the change
     tokenium.meta.applyTransform();
 });
 
-// panning the tokenium
-tokenium.meta.viewport.addEventListener("mousedown", (ev) => {
-    // start panning
+// Events for panning the tokenium
+tokenium.meta.container.addEventListener("mousedown", (ev) => {
+    // If the wheel button was pressed, start panning
     if (ev.button == 1) {
         ev.preventDefault();
-
         tokenium.meta.panStatus = true;
-        tokenium.meta.panStart = tokenium.meta.projectPoint({x: ev.pageX, y: ev.pageY});
     }
 });
-
 window.addEventListener("mouseup", (ev) => {
-    // end panning
+    // If the wheel button was released, stop panning
     if (ev.button == 1) {
         tokenium.meta.panStatus = false;
     }
 });
-
-tokenium.meta.viewport.addEventListener("mousemove", (ev) => {
-    // moving the tokenium
+tokenium.meta.container.addEventListener("mousemove", (ev) => {
+    // If the panStatus is true, move the tokenium along with the mouse
     if (tokenium.meta.panStatus) {
-    //if ((ev.buttons & 4) != 0 && tokenium.meta.panStatus) {
-        projectedMouse = tokenium.meta.projectPoint({x: ev.pageX, y: ev.pageY});
-
-        tokenium.meta.position.x += projectedMouse.x - tokenium.meta.panStart.x;
-        tokenium.meta.position.y += projectedMouse.y - tokenium.meta.panStart.y;
-
-        //console.log(translatedOrigin, translatedViewportSize);
-        //transform.position.x = checkLimits(transform.position.x, {max: , min: });
-        //transform.position.y = checkLimits(transform.position.y, {max: , min: });
-
-        tokenium.meta.panStart = tokenium.meta.projectPoint({x: ev.pageX, y: ev.pageY});
-
+        // Change the position   
+        tokenium.meta.position.x += ev.movementX * tokenium.meta.Z;
+        tokenium.meta.position.y += ev.movementY * tokenium.meta.Z;
+        
+        // Apply the change
         tokenium.meta.applyTransform();
     }
 });
 
-
-
-// dragHandler
+// Events for token dragging
 window.addEventListener("mouseup", (ev) => {
-    // end dragging
-    if (ev.button == 0 && tokenium.dragHandler.dragStatus) {
+    // If the LMB was released, end dragging
+    if (ev.button == 0) {   
         tokenium.dragHandler.dragStatus = false;
-        tokenium.dragHandler.setCtrlOffset = true;
-        tokenium.dragHandler.dragOffset = {x: 0, y: 0}
     }
 });
-
 tokenium.meta.container.addEventListener("mousemove", (ev) => {
-    // applying movement to token
+    // If a token is being dragged, apply movement
     if (tokenium.dragHandler.dragStatus) {
-        if (!ev.ctrlKey) {
-            var gridSnap = false
-        }
-        projectedMouse = tokenium.meta.projectPoint({x: ev.pageX, y: ev.pageY}, gridSnap);
-
-        if (ev.ctrlKey && tokenium.dragHandler.setCtrlOffset) {
-            tokenium.dragHandler.setCtrlOffset = false;
-            tokenium.dragHandler.dragOffset = {x: projectedMouse.x - unpx(tokenium.dragHandler.dragObject.style.left), y: projectedMouse.y - unpx(tokenium.dragHandler.dragObject.style.top)}
-        }
-        
-        tokenium.dragHandler.dragObject.style.left = px(projectedMouse.x - tokenium.dragHandler.dragOffset.x);
-        tokenium.dragHandler.dragObject.style.top = px(projectedMouse.y - tokenium.dragHandler.dragOffset.y);
-    }
-});
-
-window.addEventListener("keyup", (ev) => {
-    if (ev.key == "Control") {
-        tokenium.dragHandler.setCtrlOffset = true;
-        tokenium.dragHandler.dragOffset = {x: 0, y: 0}
-    }
-});
-
-
-/*
-// the ruler system
-window.addEventListener("contextmenu", (ev) => {
-    // prevent context menu when measuring
-    if (tokenium.ruler.measureStatus == "active") {
-        ev.preventDefault()
-    }
-});
-
-
-window.addEventListener("mousedown", (ev) => {
-    if (ev.button == 0) {
-        // end measurement
-        if (tokenium.ruler.measureStatus == "active") {
-            tokenium.ruler.endMeasuring()
-        }
-    }
-});
-
-tokenium.meta.container.addEventListener("mousedown", (ev) => {
-    if (ev.button == 2) {
-        ev.preventDefault();
-        // beginning of measurement
-        if (tokenium.ruler.measureStatus == "idle") {    
-            tokenium.ruler.measureStatus = "ready";
-        }
-
-        // ruler pivot
-        else if (tokenium.ruler.measureStatus == "active") {
-            tokenium.ruler.myArrows.push(new Arrow(tokenium.ruler.currentArrowStart, tokenium.ruler.currentArrowEnd, playerColor));
-
-            if (!ev.ctrlKey) {var gridSnap = true}
-            tokenium.ruler.currentArrowStart = tokenium.meta.projectPoint({x: ev.pageX, y: ev.pageY}, gridSnap);
-        }
-    }
-});
-
-window.addEventListener("mouseup", (ev) => {
-    // end measurement
-    if ((tokenium.ruler.measureStatus != "idle" && ev.button == 0) || (tokenium.ruler.measureStatus == "ready") && ev.button == 2) {
-        tokenium.ruler.endMeasuring();
-    }
-});
-
-tokenium.meta.container.addEventListener("mousemove", (ev) => {
-    // if mouse is moved while status is ready, measuring can begin
-    if (tokenium.ruler.measureStatus == "ready") {
-        tokenium.ruler.measureStatus = "active";
-
-        // initialisation of measuring
-        if (!ev.ctrlKey) {var gridSnap = true}
-        tokenium.ruler.currentArrowStart = tokenium.meta.projectPoint({x: ev.pageX, y: ev.pageY}, gridSnap);
-    }
-
-    // updating the arrow while moving
-    else if (tokenium.ruler.measureStatus == "active") {
-        if (!ev.ctrlKey) {
-            lastArrowEnd = [tokenium.ruler.currentArrowEnd.x, tokenium.ruler.currentArrowEnd.y];
-
-            tokenium.ruler.currentArrowEnd = tokenium.meta.projectPoint({x: ev.pageX, y: ev.pageY}, true);
-
-            if (tokenium.ruler.currentArrowEnd.x != lastArrowEnd[0] || tokenium.ruler.currentArrowEnd.y != lastArrowEnd[1]) {
-                tokenium.ruler.myArrows.pop();
-                tokenium.ruler.myArrows.push(new Arrow(tokenium.ruler.currentArrowStart, tokenium.ruler.currentArrowEnd, playerColor));
-                tokenium.ruler.updateCanvas();
-            }
-        }
+        if (ev.ctrlKey) {
+            // If control is held, move the token along with the mouse
+            tokenium.dragHandler.dragObject.style.left = px(unpx(tokenium.dragHandler.dragObject.style.left) + ev.movementX * tokenium.meta.Z);
+            tokenium.dragHandler.dragObject.style.top = px(unpx(tokenium.dragHandler.dragObject.style.top) + ev.movementY * tokenium.meta.Z);
+        } 
         else {
-            tokenium.ruler.currentArrowEnd = tokenium.meta.projectPoint({x: ev.pageX, y: ev.pageY});
-            tokenium.ruler.myArrows.pop();
-            tokenium.ruler.myArrows.push(new Arrow(tokenium.ruler.currentArrowStart, tokenium.ruler.currentArrowEnd, playerColor));
-            tokenium.ruler.updateCanvas();
+            // If it's not held, snap token to grid
+            let projectedMouse = tokenium.meta.projectPoint({x: ev.clientX, y: ev.clientY});
+            tokenium.dragHandler.dragObject.style.left = px(projectedMouse.x - projectedMouse.x % tokenium.grid.gridSize);
+            tokenium.dragHandler.dragObject.style.top = px(projectedMouse.y - projectedMouse.y % tokenium.grid.gridSize);
         }
     }
 });
-*/
 
+// Declare as loaded
 window.declareAsLoaded("tokenium");

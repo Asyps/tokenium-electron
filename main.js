@@ -11,11 +11,9 @@ globals = {};
 
 // Close the application when all windows are closed
 app.on("window-all-closed", () => {
-    if (process.platform != "darwin") {
-        // If a game is chosen, save the window layout
-        if (globals.gameName) fileSystem.saveWindowLayout();
-        app.quit();
-    }
+    // If a game is chosen, save the window layout
+    if (globals.gameName) fileSystem.saveWindowLayout();
+    app.quit();
 });
 
 // Class for handling modules
@@ -84,7 +82,7 @@ let games = {
 };
 
 
-// Functions for reading file system contents
+// Functions for reading/modifying file system contents
 const fileSystem = {
     async getAvailableModules() {
         var dirPath = path.join(__dirname, "modules");
@@ -450,7 +448,6 @@ ipcMain.handle("callFunction", (ev, moduleName, functionName, args) => {
         }
         catch {
             throw new Error("Module is not loaded or it's window was closed.");
-
             // Ig I can just ignore this error, if the module is not loaded or it's window was closed, simply do nothing
         }
     }
@@ -459,10 +456,12 @@ ipcMain.handle("callFunction", (ev, moduleName, functionName, args) => {
 const loadedModules = {}
 // Handles questions about loaded modules or extensions
 ipcMain.handle("moduleLoadEnquiry", (ev, moduleName, extensionName) => {
-    if (extensionName == undefined) {
-        return loadedModules.hasOwnProperty(moduleName);
-    }
-    else return loadedModules[moduleName].includes(extensionName);
+    let isModuleLoaded = loadedModules.hasOwnProperty(moduleName);
+    
+    // If no extension name is specified, return the awnser for the module
+    if (extensionName == undefined) return isModuleLoaded;
+    // If it is specified, only return the awnser for the extension if the module is loaded
+    else return isModuleLoaded && loadedModules[moduleName].includes(extensionName);
 });
 
 // Handles requests to announce that a module has been loaded

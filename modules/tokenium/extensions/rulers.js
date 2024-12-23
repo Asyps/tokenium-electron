@@ -1,16 +1,23 @@
 
-// class arrow
+// Class for storing arrows
 class Arrow {
     constructor(start, end, color) {
+        this.color = color;
+        
+        // The start and end point of the arrow base
         this.start = start;
         this.end = end;
-        this.color = color;
 
+        // The angle between the base of the arrow and each of the flaps
         let flapAngle = Math.PI / 6;
+
+        // The lenght of the flaps
         let flapLenght = 10;
 
+        // Angle between the positive x axis and the base of the arrow
         let angle = Math.atan2(start.y - end.y, start.x - end.x);
 
+        // The coordinates of the ending points of the flaps
         this.flap1 = {
             x: Math.cos(angle + flapAngle) * flapLenght + end.x,
             y: Math.sin(angle + flapAngle) * flapLenght + end.y
@@ -22,17 +29,16 @@ class Arrow {
     }
 }
 
-// html canvas
-c = document.createElement("canvas");
+// Alter DOM
+let c = document.createElement("canvas");
 c.id = "rulerLayer";
 c.setAttribute("class", "tokenium_standard");
-/*
-    <canvas id="rulerLayer" class="tokenium_standard"></canvas>
-*/
+// <canvas id="rulerLayer" class="tokenium_standard"></canvas>
 tokenium.meta.container.insertBefore(c, tokenium.tokens.logicalContainer);
 
-// ruler data and functions
+// Add ruler data and functions to the tokenium data object
 tokenium.ruler = {
+    // DOM elements
     canvas: document.getElementById("rulerLayer"),
     get ctx() { return this.canvas.getContext("2d"); },
 
@@ -74,8 +80,11 @@ tokenium.ruler = {
     }
 }
 
-// resizing event
-document.addEventListener("changeTokeniumSize", (e) => {
+// Resizing event
+window.defineAPI("changeTokeniumSize", (args) => {
+    [width, height] = args;
+
+    // Change the size of the ruler canvas
     tokenium.ruler.canvas.setAttribute("width", e.detail.width);
     tokenium.ruler.canvas.setAttribute("height", e.detail.height);
 });
@@ -155,4 +164,6 @@ tokenium.meta.container.addEventListener("mousemove", (ev) => {
     }
 });
 
+
+// Declare as loaded
 window.declareAsLoaded("tokenium", "rulers");
