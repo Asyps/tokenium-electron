@@ -1,6 +1,7 @@
 // Register a description
-let description = "This extension adds the functionality of rulers to tokenium. Rulers look like arrows. Rulers are a visual guide to token moving, and they can be used to measure distances.";
-window.callFunctionOnLoaded(["chat", "commands"], "register extension description", "tokenium", "rulers", description);
+window.callFunctionOnLoaded(["chat", "commands"], "register extension description", "tokenium", "rulers", 
+    "This extension adds the functionality of rulers to tokenium. Rulers look like arrows. Rulers are a visual guide to token moving, and they can be used to measure distances."
+);
 
 // Class for storing arrows
 class Arrow {
@@ -36,8 +37,18 @@ class Arrow {
 let c = document.createElement("canvas");
 c.id = "rulerLayer";
 c.setAttribute("class", "tokenium_standard");
-// <canvas id="rulerLayer" class="tokenium_standard"></canvas>
-tokenium.meta.container.insertBefore(c, tokenium.tokens.logicalContainer);
+c.setAttribute("width", tokeniumData.width);
+c.setAttribute("height", tokeniumData.height);
+// <canvas id="rulerLayer" class="tokenium_standard" width=tokeniumData.width height=tokeniumData.height></canvas>
+tokenium.panZoomHandler.container.insertBefore(c, tokenium.tokens.logicalContainer);
+
+// Add data to mockup of Document       in the document, maybe only the data inserted into the constructor will be stored
+tokeniumData.publicArrows = [
+    new Arrow({ x: 96, y: 96 }, { x: 288, y: 160 }, "#FF00FF"),
+    new Arrow({ x: 288, y: 160 }, { x: 544, y: 224 }, "#FF00FF"),
+    new Arrow({ x: 609, y: 437 }, { x: 311, y: 47 }, "#0000FF"),
+]
+
 
 // Add ruler data and functions to the tokenium data object
 tokenium.ruler = {
@@ -45,13 +56,19 @@ tokenium.ruler = {
     canvas: document.getElementById("rulerLayer"),
     ctx: document.getElementById("rulerLayer").getContext("2d"),
 
+    // The resize function
+    resize(width, height) {
+        this.canvas.setAttribute("width", width);
+        this.canvas.setAttribute("height", height);
+
+        // Redraw the grid
+        this.redraw();
+    },
+
     measureStatus: "idle",
 
     // List of client side arrows
-    myArrows: [],
-
-    // Mockup for arrows of other people, will get replaced by server
-    otherArrows: [],
+    localArrows: [],
 
     // The starting and ending positions of the current arrow
     currentArrowStart: {},
@@ -62,7 +79,7 @@ tokenium.ruler = {
         tokenium.ruler.measureStatus = "idle";
 
         // Clear client side arrows and refresh canvas
-        tokenium.ruler.myArrows = [];
+        tokenium.ruler.localArrows = [];
         tokenium.ruler.redraw();
     },
 
@@ -74,7 +91,7 @@ tokenium.ruler = {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
         // Draw all arrows
-        for (const arrow of this.myArrows.concat(this.otherArrows)) {
+        for (const arrow of this.localArrows.concat(tokeniumData.publicArrows)) {
             if (arrow.start.x != arrow.end.x || arrow.start.y != arrow.end.y) {
                 this.ctx.strokeStyle = arrow.color;
 
@@ -96,17 +113,8 @@ tokenium.ruler = {
     }
 }
 
-// Add the ruler canvas to the resizing event
-window.defineAPI("changeTokeniumSize", (args) => {
-    [width, height] = args;
-
-    // Change the size of the ruler canvas
-    tokenium.ruler.canvas.setAttribute("width", width);
-    tokenium.ruler.canvas.setAttribute("height", height);
-
-    // Redraw the ruler canvas
-    tokenium.ruler.redraw();
-});
+// Redraw the ruler canvas
+tokenium.ruler.redraw();
 
 
 // The ruler system events
@@ -132,7 +140,7 @@ window.addEventListener("mouseup", (ev) => {
     }
 });
 
-tokenium.meta.container.addEventListener("mousedown", (ev) => {
+tokenium.panZoomHandler.container.addEventListener("mousedown", (ev) => {
     if (ev.button == 2) {
         // If the RMB was pressed...
         ev.preventDefault();
@@ -145,23 +153,23 @@ tokenium.meta.container.addEventListener("mousedown", (ev) => {
         // Pivot the arrow
         else if (tokenium.ruler.measureStatus == "active") {
             // Add the current arrow to the list
-            tokenium.ruler.myArrows.push(new Arrow(tokenium.ruler.currentArrowStart, tokenium.ruler.currentArrowEnd, playerColor));
+            tokenium.ruler.localArrows.push(new Arrow(tokenium.ruler.currentArrowStart, tokenium.ruler.currentArrowEnd, playerColor));
 
             // Set the new start coordinates
             if (!ev.ctrlKey) {var gridSnap = "center"}
-            tokenium.ruler.currentArrowStart = tokenium.meta.projectPoint({x: ev.pageX, y: ev.pageY}, gridSnap);
+            tokenium.ruler.currentArrowStart = tokenium.panZoomHandler.projectPoint({x: ev.pageX, y: ev.pageY}, gridSnap);
         }
     }
 });
 
-tokenium.meta.container.addEventListener("mousemove", (ev) => {
+tokenium.panZoomHandler.container.addEventListener("mousemove", (ev) => {
     // If mouse is moved while status is ready, measuring can begin
     if (tokenium.ruler.measureStatus == "ready") {
         tokenium.ruler.measureStatus = "active";
 
         // Initialisation of measuring
         if (!ev.ctrlKey) {var gridSnap = "center"}
-        tokenium.ruler.currentArrowStart = tokenium.meta.projectPoint({x: ev.pageX, y: ev.pageY}, gridSnap);
+        tokenium.ruler.currentArrowStart = tokenium.panZoomHandler.projectPoint({x: ev.pageX, y: ev.pageY}, gridSnap);
     }
 
     // Updating the arrow while moving
@@ -170,20 +178,20 @@ tokenium.meta.container.addEventListener("mousemove", (ev) => {
             // If ctrl is not held, snap the position to the grid
             let lastArrowEnd = [tokenium.ruler.currentArrowEnd.x, tokenium.ruler.currentArrowEnd.y];
 
-            tokenium.ruler.currentArrowEnd = tokenium.meta.projectPoint({x: ev.pageX, y: ev.pageY}, "center");
+            tokenium.ruler.currentArrowEnd = tokenium.panZoomHandler.projectPoint({x: ev.pageX, y: ev.pageY}, "center");
 
             // Only change the arrow and redraw if the arrow is diffirent from the last one
             if (tokenium.ruler.currentArrowEnd.x != lastArrowEnd[0] || tokenium.ruler.currentArrowEnd.y != lastArrowEnd[1]) {
-                tokenium.ruler.myArrows.pop();
-                tokenium.ruler.myArrows.push(new Arrow(tokenium.ruler.currentArrowStart, tokenium.ruler.currentArrowEnd, playerColor));
+                tokenium.ruler.localArrows.pop();
+                tokenium.ruler.localArrows.push(new Arrow(tokenium.ruler.currentArrowStart, tokenium.ruler.currentArrowEnd, playerColor));
                 tokenium.ruler.redraw();
             }
         }
         else {
             // If ctrl is held, always put the end position at the mouse, and always change the arrow and redraw
-            tokenium.ruler.currentArrowEnd = tokenium.meta.projectPoint({x: ev.pageX, y: ev.pageY});
-            tokenium.ruler.myArrows.pop();
-            tokenium.ruler.myArrows.push(new Arrow(tokenium.ruler.currentArrowStart, tokenium.ruler.currentArrowEnd, playerColor));
+            tokenium.ruler.currentArrowEnd = tokenium.panZoomHandler.projectPoint({x: ev.pageX, y: ev.pageY});
+            tokenium.ruler.localArrows.pop();
+            tokenium.ruler.localArrows.push(new Arrow(tokenium.ruler.currentArrowStart, tokenium.ruler.currentArrowEnd, playerColor));
             tokenium.ruler.redraw();
         }
     }

@@ -37,6 +37,7 @@ const playerChat = {
         // HTML components
         textInput: document.getElementById("playerChatInput"),
         messageArea: document.getElementById("playerChatMessages"),
+        anchor: document.getElementById("scroll-anchor"),
         
         // Helper functions that add the chat components into DOM
         displaySystemMessage(text) {
@@ -46,7 +47,7 @@ const playerChat = {
             message.textContent = text;
 
             // Add it to DOM
-            this.messageArea.appendChild(message);
+            this.messageArea.insertBefore(message, this.anchor);
         },
         displayUserHeader(userName) {
             // Create the header
@@ -67,7 +68,7 @@ const playerChat = {
             // Assemble and add to DOM
             header.appendChild(img);
             header.appendChild(name);
-            this.messageArea.appendChild(header);
+            this.messageArea.insertBefore(header, this.anchor);
         },
         displayUserMessage(text) {
             // Create the user message
@@ -76,7 +77,7 @@ const playerChat = {
             message.textContent = text;
 
             // Add it to DOM
-            this.messageArea.appendChild(message);
+            this.messageArea.insertBefore(message, this.anchor);
         },
 
         // Function to display any component
@@ -102,14 +103,17 @@ const playerChat = {
             if (chatDocumentMockup.lastMessageSender != localPlayerName) {
                 let header = new chatComponent("header", localPlayerName);
 
-                playerChat.internal.addChatComponent(header);
+                this.internal.addChatComponent(header);
                 chatDocumentMockup.chatMessages.push(header);
             }
 
-            // Add the message
             let message = new chatComponent("message", this.internal.textInput.value);
-
+            
+            // Add the message to DOM and scroll the chat
             this.internal.addChatComponent(message);
+            this.internal.anchor.scrollIntoView({ behavior: 'smooth' });
+
+            // Add the message to Document
             chatDocumentMockup.chatMessages.push(message);
 
             // Clear the text area
@@ -121,7 +125,11 @@ const playerChat = {
     sendSystemMessage(text) {
         let systemMessage = new chatComponent("system", text);
 
+        // Add the message to DOM and scroll the chat
         this.internal.addChatComponent(systemMessage);
+        this.internal.anchor.scrollIntoView({ behavior: 'smooth' });
+
+        // Add the message to Document
         chatDocumentMockup.chatMessages.push(systemMessage);
     },
 }
@@ -144,6 +152,10 @@ window.defineAPI("player chat system message", (args) => {
 for (i of chatDocumentMockup.chatMessages) {
     playerChat.internal.addChatComponent(i);
 }
+
+// Scroll the chat
+playerChat.internal.anchor.scrollIntoView({ behavior: 'smooth' });
+
 
 // Declare as loaded
 window.declareAsLoaded("chat");

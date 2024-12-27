@@ -153,3 +153,8 @@ html, body {
     font-size: 14px;
     color: #333333;
 }
+
+#scroll-anchor, #scroll-anchor-in-world-chat {
+    height: 1px; /* Keeps it invisible but occupies space */
+    visibility: hidden; /* Ensures it doesn't affect layout */
+}

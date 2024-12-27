@@ -434,7 +434,9 @@ ipcMain.handle("callFunction", async (ev, moduleName, functionName, args) => {
     if (moduleName == "") {
         for (i in active_windows) {
             try {
+                //let reply = await ipcMain.handleOnce("API-reply-" + functionName, (ev, reply) => reply);
                 await active_windows[i].webContents.send("API-" + functionName, args);
+                //return reply; 
             }
             catch {
                 throw new Error("Module's window was closed.");
@@ -444,7 +446,14 @@ ipcMain.handle("callFunction", async (ev, moduleName, functionName, args) => {
     }
     else {
         try {
-            await active_windows[moduleName].webContents.send("API-" + functionName, args);
+            let reply = new Promise((resolve, reject) => {
+                ipcMain.handleOnce("API-reply-" + functionName, (ev, reply) => {
+                    resolve(reply);
+                });
+            });
+            
+            active_windows[moduleName].webContents.send("API-" + functionName, args);
+            return await reply; 
         }
         catch {
             throw new Error("Module is not loaded or it's window was closed.");

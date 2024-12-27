@@ -1,6 +1,7 @@
 // Register a description
-let description = "This module is the key visual space of any game. The tokenium allows you to add a background, add tokens, and move them. Tokenium can be scrolled and panned. This module also includes a built in grid functionality.";
-window.callFunctionOnLoaded(["chat", "commands"], "register module description", "tokenium", description);
+window.callFunctionOnLoaded(["chat", "commands"], "register module description", "tokenium", 
+    "This module is the key visual space of any game. The tokenium allows you to add a background, add tokens, and move them. Tokenium can be scrolled and panned. This module also includes a built in grid functionality."
+);
 
 // Helper functions
 function px(number) {
@@ -21,20 +22,68 @@ function grid(number) {
 
 // Temporary stuff (will later be managed by other front end systems like character manager)
 var imgDict = {
-    "Dave": "../../games/desert/assets/Dave.png"
+    "Dave": "../../games/desert/assets/Dave.png",
+    "Fred": "../../profile_pics/placeholder_1.png",
 }
 const playerColor = "#00FFFF";
 
+// Document mockup
+tokeniumData = {
+    // Tokenium size in px
+    width: 768,
+    height: 640,
+    gridSize: 64,
+
+    backgroundImage: {
+        path: "../../games/desert/assets/cave.png",
+        width: 896,
+        height: 704
+    },
+
+    tokens: [
+        {
+            name: "Dave",
+            position: { x: 192, y: 192 },
+            width: 64,
+            height: 64
+        },
+        {
+            name: "Fred",
+            position: { x: 512, y: 384 },
+            width: 64,
+            height: 64
+        }
+    ]
+}
 
 const tokenium = {
-    meta: {
+    // Builds the tokenium from Document data           if this object turns into a class, this will be the constructor
+    initTokenium() {
+        // Change sizes of all DOM containers
+        for (i in tokenium) if (i != "initTokenium") tokenium[i].resize(tokeniumData.width, tokeniumData.height);
+
+        // Add the background image
+        this.background.addBackgroundImage(tokeniumData.backgroundImage.path, tokeniumData.backgroundImage.width, tokeniumData.backgroundImage.height);
+
+        // Add the tokens
+        for (i of tokeniumData.tokens) {
+            this.tokens.addToken(i.name, i.position.x, i.position.y, i.width, i.height);
+        }
+    },
+
+    panZoomHandler: {
         // DOM elements
         container: document.getElementById("tokenium container"),
 
-        // Tokenium size in px
-        width: 512,
-        height: 512,
-
+        // The resize function
+        resize(width, height) {
+            this.container.style.setProperty("width", px(width));
+            this.container.style.setProperty("height", px(height));
+        },
+        
+        // Is tokenium being panned?
+        panStatus: false,
+        
         // Data about tokenium pan and zoom
         position: {
             x: 0,
@@ -42,29 +91,26 @@ const tokenium = {
         },
         Z: 1,
 
-        // Limits to zooming
+        // Limits to zooming    maybe will be moved to a Document containing tokenium settings
         zoomLimits: {
             max: 2,
             min: 0.5
         },
         
-        // Is tokenium being panned?
-        panStatus: false,
-        
         // Function to project a point from absolute window coordinates to the relative tokenium coordinates (coordinates within the tokenium without effects of pan and zoom)
         projectPoint(coords, snapMode="no snap") {
-            let logicalX = coords.x * this.Z - (this.Z - 1) * 0.5 * this.width - this.position.x;
-            let logicalY = coords.y * this.Z - (this.Z - 1) * 0.5 * this.height - this.position.y;
+            let logicalX = coords.x * this.Z - (this.Z - 1) * 0.5 * tokeniumData.width - this.position.x;
+            let logicalY = coords.y * this.Z - (this.Z - 1) * 0.5 * tokeniumData.height - this.position.y;
             
             // If snapping is on and grid is on, snap the coordinates
-            if (snapMode != "no snap" && tokenium.grid.gridSize != null) {
-                logicalX -= logicalX % tokenium.grid.gridSize;
-                logicalY -= logicalY % tokenium.grid.gridSize;
+            if (snapMode != "no snap" && tokeniumData.gridSize != null) {
+                logicalX -= logicalX % tokeniumData.gridSize;
+                logicalY -= logicalY % tokeniumData.gridSize;
                 
                 // If the snapping mode is center, move the coordinates to the center
                 if (snapMode == "center") {
-                    logicalX += tokenium.grid.gridSize * 0.5;
-                    logicalY += tokenium.grid.gridSize * 0.5;
+                    logicalX += tokeniumData.gridSize * 0.5;
+                    logicalY += tokeniumData.gridSize * 0.5;
                 }
             }
 
@@ -78,6 +124,15 @@ const tokenium = {
     },
 
     dragHandler: {
+        // DOM elements
+        container: document.getElementById("tokenDragLayer"),
+
+        // The resize function
+        resize(width, height) {
+            this.container.style.setProperty("width", px(width));
+            this.container.style.setProperty("height", px(height));
+        },
+
         // Is an object currently being dragged?
         dragStatus: false,
 
@@ -101,13 +156,19 @@ const tokenium = {
         // DOM elements
         container: document.getElementById("backgroundLayer"),
 
+        // The resize function
+        resize(width, height) {
+            this.container.style.setProperty("width", px(width));
+            this.container.style.setProperty("height", px(height));
+        },
+
         // A function to add an image to the background
-        addBackgroundImage(path, height, width, positionX = 0, positionY = 0) {
+        addBackgroundImage(path, width, height, positionX = 0, positionY = 0) {
             let img = document.createElement("img");
 
             img.src = path;
             img.height = height;
-            img.withh = width;
+            img.width = width;
             img.style.left = px(positionX);
             img.style.top = px(positionY);
             
@@ -120,25 +181,31 @@ const tokenium = {
         canvas: document.getElementById("gridLayer"),
         ctx: document.getElementById("gridLayer").getContext("2d"),
 
-        // Grid size
-        gridSize: null,
+        // The resize function
+        resize(width, height) {
+            this.canvas.setAttribute("width", width);
+            this.canvas.setAttribute("height", height);
+    
+            // Redraw the grid
+            this.redraw();
+        },
 
         redraw() {
             // Clear the grid
             this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
             
-            if (this.gridSize != null) {
+            if (tokeniumData.gridSize != null) {
                 // Only redraw the grid if it's turned on
                 this.ctx.beginPath();
 
                 // Redraw the vertical lines
-                for (let i = this.gridSize; i < this.canvas.width; i += this.gridSize) {
+                for (let i = tokeniumData.gridSize; i < this.canvas.width; i += tokeniumData.gridSize) {
                     this.ctx.moveTo(i, 0);
                     this.ctx.lineTo(i, this.canvas.height);
                 }
 
                 // Redraw the horizontal lines
-                for (let i = this.gridSize; i < this.canvas.height; i += this.gridSize) {
+                for (let i = tokeniumData.gridSize; i < this.canvas.height; i += tokeniumData.gridSize) {
                     this.ctx.moveTo(0, i);
                     this.ctx.lineTo(this.canvas.width, i);
                 }
@@ -151,8 +218,13 @@ const tokenium = {
 
     tokens: {
         // DOM elements
-        logicalContainer: document.getElementById("tokenLogicalLayer"),
-        visualContainer: document.getElementById("tokenVisualLayer"),
+        container: document.getElementById("tokenVisualLayer"),
+
+        // The resize function
+        resize(width, height) {
+            this.container.style.setProperty("width", px(width));
+            this.container.style.setProperty("height", px(height));
+        },
 
         // A list of token names that are already in use
         tokenNameList: [],
@@ -160,11 +232,11 @@ const tokenium = {
         // Function to add a new token
         addToken(name, x, y, width=null, height=null) {
             // Create the DOM objects
-            let logicalToken = document.createElement("img");
+            let dragToken = document.createElement("img");
             let visualToken = document.createElement("img");
 
             // Set images
-            logicalToken.src = visualToken.src = imgDict[name];
+            dragToken.src = visualToken.src = imgDict[name];
 
             // Set names
             // Appends " (n)" for duplicte ids (will later get replaced by character manager throwing a rename prompt if the id is duplicate, maybe this will stay as a safeguard)
@@ -177,35 +249,35 @@ const tokenium = {
             this.tokenNameList += name;
             
             // Setting IDs
-            logicalToken.id = name + " logical";
+            dragToken.id = name + " drag";
             visualToken.id = name + " visual";
 
             // Setting height and width
             // If argument is specified and valid, use argument. Else if grid is turned off, use default value. Otherwise use grid size
-            logicalToken.width = visualToken.width   = (width > 7) ? width : (tokenium.grid.gridSize == null) ? 64 : tokenium.grid.gridSize;
-            logicalToken.height = visualToken.height = (height > 7) ? height : (tokenium.grid.gridSize == null) ? 64 : tokenium.grid.gridSize;
+            dragToken.width  = visualToken.width  = (width  > 7) ? width  : (tokenium.grid.gridSize == null) ? 64 : tokenium.grid.gridSize;
+            dragToken.height = visualToken.height = (height > 7) ? height : (tokenium.grid.gridSize == null) ? 64 : tokenium.grid.gridSize;
 
-            // Setting position                                      Is grid turned off?
-            logicalToken.style.left = visualToken.style.left = px(x);
-            logicalToken.style.top = visualToken.style.top = px(y);
+            // Setting position
+            dragToken.style.left = visualToken.style.left = px(x);
+            dragToken.style.top = visualToken.style.top = px(y);
 
             // Set the CSS classes
-            logicalToken.setAttribute("class", "logicalTokenLayer");
+            dragToken.setAttribute("class", "dragTokenLayer");
             visualToken.setAttribute("class", "visualTokenLayer");
 
             // Drag and drop functionality
-            logicalToken.addEventListener("mousedown", tokenium.dragHandler.beginDrag);
-            logicalToken.setAttribute("visualToken", visualToken.id);
+            dragToken.addEventListener("mousedown", tokenium.dragHandler.beginDrag);
+            dragToken.setAttribute("visualToken", visualToken.id);
 
             // Add the tokens to DOM
-            this.logicalContainer.appendChild(logicalToken);
-            this.visualContainer.appendChild(visualToken);
+            tokenium.dragHandler.container.appendChild(dragToken);
+            this.container.appendChild(visualToken);
         },
 
         // Deletes the token with the given name
         removeToken(name) {
             if (this.tokenNameList.includes(name)) { 
-                document.getElementById(name + " logical").remove();
+                document.getElementById(name + " drag").remove();
                 document.getElementById(name + " visual").remove();
                 this.tokenNameList.remove(name);
             }
@@ -214,80 +286,40 @@ const tokenium = {
 }
 
 
-// API to resize the canvas
-window.defineAPI("changeTokeniumSize", (args) => {
-    [width, height] = args;
-
-    tokenium.meta.width = width,
-    tokenium.meta.height = height,
-
-    // Change the size of the tokenium container
-    tokenium.meta.container.style.setProperty("width", px(width));
-    tokenium.meta.container.style.setProperty("height", px(height));
-
-    // Change the size of the container for logical tokens
-    tokenium.tokens.logicalContainer.style.setProperty("width", px(width));
-    tokenium.tokens.logicalContainer.style.setProperty("height", px(height));
-    
-    // Change the size of the container for visual tokens
-    tokenium.tokens.visualContainer.style.setProperty("width", px(width));
-    tokenium.tokens.visualContainer.style.setProperty("height", px(height));
-
-    // Change the size of the grid canvas
-    tokenium.grid.canvas.setAttribute("width", width);
-    tokenium.grid.canvas.setAttribute("height", height);
-
-    // Redraw the grid
-    tokenium.grid.redraw();
-});
-
-// API to change the size of a grid cell
-window.defineAPI("changeGridSize", (args) => {
-    [newCellSize] = args;   // If newCellSize is null, the grid is turned off
-
-    // If the newCellSize is too small or null, turn off the grid
-    if (newCellSize < 8) tokenium.grid.gridSize = null;
-    else tokenium.grid.gridSize = newCellSize;
-
-    // Redraw the grid
-    tokenium.grid.redraw();
-});
-
-
 // Event for zooming in the tokenium
-tokenium.meta.container.addEventListener("wheel", (ev) => {
+tokenium.panZoomHandler.container.addEventListener("wheel", (ev) => {
     // Only apply the change if the Z value would get smaller while it's above it's minimum, or the equivalent
-    if (tokenium.meta.Z > tokenium.meta.zoomLimits.min && Math.sign(ev.deltaY) == 1 || tokenium.meta.Z < tokenium.meta.zoomLimits.max && Math.sign(ev.deltaY) == -1) {
-        tokenium.meta.Z *= 0.9 ** Math.sign(ev.deltaY);
+    if (tokenium.panZoomHandler.Z > tokenium.panZoomHandler.zoomLimits.min && Math.sign(ev.deltaY) == 1 || tokenium.panZoomHandler.Z < tokenium.panZoomHandler.zoomLimits.max && Math.sign(ev.deltaY) == -1) {
+        tokenium.panZoomHandler.Z *= 0.9 ** Math.sign(ev.deltaY);
     }
 
     // Apply the change
-    tokenium.meta.applyTransform();
+    tokenium.panZoomHandler.applyTransform();
 });
 
 // Events for panning the tokenium
-tokenium.meta.container.addEventListener("mousedown", (ev) => {
+tokenium.panZoomHandler.container.addEventListener("mousedown", (ev) => {
     // If the wheel button was pressed, start panning
     if (ev.button == 1) {
         ev.preventDefault();
-        tokenium.meta.panStatus = true;
+        tokenium.panZoomHandler.panStatus = true;
     }
 });
 window.addEventListener("mouseup", (ev) => {
     // If the wheel button was released, stop panning
     if (ev.button == 1) {
-        tokenium.meta.panStatus = false;
+        tokenium.panZoomHandler.panStatus = false;
     }
 });
-tokenium.meta.container.addEventListener("mousemove", (ev) => {
+window.addEventListener("mousemove", (ev) => {
     // If the panStatus is true, move the tokenium along with the mouse
-    if (tokenium.meta.panStatus) {
+    if (tokenium.panZoomHandler.panStatus) {
         // Change the position   
-        tokenium.meta.position.x += ev.movementX * tokenium.meta.Z;
-        tokenium.meta.position.y += ev.movementY * tokenium.meta.Z;
+        tokenium.panZoomHandler.position.x += ev.movementX * tokenium.panZoomHandler.Z;
+        tokenium.panZoomHandler.position.y += ev.movementY * tokenium.panZoomHandler.Z;
         
         // Apply the change
-        tokenium.meta.applyTransform();
+        tokenium.panZoomHandler.applyTransform();
     }
 });
 
@@ -298,22 +330,101 @@ window.addEventListener("mouseup", (ev) => {
         tokenium.dragHandler.dragStatus = false;
     }
 });
-tokenium.meta.container.addEventListener("mousemove", (ev) => {
+tokenium.panZoomHandler.container.addEventListener("mousemove", (ev) => {
     // If a token is being dragged, apply movement
     if (tokenium.dragHandler.dragStatus) {
-        if (ev.ctrlKey || tokenium.grid.gridSize == null) {
+        if (ev.ctrlKey || tokeniumData.gridSize == null) {
             // If control is held or if grid is turned off, move the token along with the mouse
-            tokenium.dragHandler.dragObject.style.left = px(unpx(tokenium.dragHandler.dragObject.style.left) + ev.movementX * tokenium.meta.Z);
-            tokenium.dragHandler.dragObject.style.top = px(unpx(tokenium.dragHandler.dragObject.style.top) + ev.movementY * tokenium.meta.Z);
+            tokenium.dragHandler.dragObject.style.left = px(unpx(tokenium.dragHandler.dragObject.style.left) + ev.movementX * tokenium.panZoomHandler.Z);
+            tokenium.dragHandler.dragObject.style.top = px(unpx(tokenium.dragHandler.dragObject.style.top) + ev.movementY * tokenium.panZoomHandler.Z);
         }
         else {
             // Else snap token to grid
-            let projectedMouse = tokenium.meta.projectPoint({x: ev.clientX, y: ev.clientY}, "corner");
+            let projectedMouse = tokenium.panZoomHandler.projectPoint({x: ev.clientX, y: ev.clientY}, "corner");
             tokenium.dragHandler.dragObject.style.left = px(projectedMouse.x);
             tokenium.dragHandler.dragObject.style.top = px(projectedMouse.y);
         }
     }
 });
+
+tokenium.initTokenium();
+
+
+
+// API to resize tokenium
+window.defineAPI("tokeniumSize", (args) => {
+    [width, height] = args;
+
+    // If no new size is specified, the function call is an enquiry
+    if (width == undefined || height == undefined) return [tokeniumData.width, tokeniumData.height];
+
+    // Alter Document
+    tokeniumData.width = width;
+    tokeniumData.height = height;
+
+    // Change sizes of all DOM containers
+    for (i in tokenium) if (i != "initTokenium") tokenium[i].resize(tokeniumData.width, tokeniumData.height);
+
+    // Return the new size 
+    return [tokeniumData.width, tokeniumData.height];
+});
+
+// API to change the size of a grid cell
+window.defineAPI("tokeniumGridSize", (args) => {
+    [newCellSize] = args;   // If newCellSize is null, the grid is turned off
+    
+    // If no new grid size is specified, the function call is an enquiry
+    if (newCellSize == undefined) return tokeniumData.gridSize;     
+    
+    // Alter Document
+    if (newCellSize < 8) tokeniumData.gridSize = null;      // If the newCellSize is too small or null, turn off the grid
+    else tokeniumData.gridSize = newCellSize;
+
+    // Redraw the grid
+    tokenium.grid.redraw();
+
+    // Return the grid size
+    return tokeniumData.gridSize;
+});
+
+// API to add a token
+window.defineAPI("addToken", (args) => {
+    [id, x, y, width, height] = args;
+
+    tokeniumData.tokens.push({
+        name: id,
+        position: { x: x, y: y },
+        width: width,
+        height: width
+    },);
+
+    tokenium.tokens.addToken(id, x, y, width, height);
+});
+
+
+// Command for resizing the tokenium
+window.callFunctionOnLoaded(["chat", "commands"], "register command", "resize", (async (flags, width, height, mapName) => {
+        if (mapName == undefined) {
+            // If no mapName is specified, resize if size specified, and return current/new size
+            if (width == undefined || height == undefined) {
+                console.log("size not specified")
+                var message = "Tokenium size is ";
+            }
+            else var message = "Tokenium size changed to ";
+            
+            let size = await window.callFunction("tokenium", "tokeniumSize", width, height);
+            
+            playerChat.commandLocal(message + size[0] + "px X " + size[1] + "px");
+        }
+        else {
+            // Coming soon
+        }
+    }).toString(),
+    "tokenium resize [width height [mapName]]",
+    "Returns the size of the current tokenium map. If size is specified, it also resizes the current tokenium map. If mapName is specified, the action is done for the specific map instead.",
+    "tokenium"
+);
+
 
 // Declare as loaded
 window.declareAsLoaded("tokenium");

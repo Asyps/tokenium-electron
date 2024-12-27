@@ -1,6 +1,7 @@
 // Register a description
-let description = "This extension adds the in world chat. Players can send messages as their characters. This chat is intended to hold all interactions within the game world, while the player chat is for 'meta' communication.";
-window.callFunctionOnLoaded(["chat", "commands"], "register extension description", "chat", "inWorldChat", description);
+window.callFunctionOnLoaded(["chat", "commands"], "register extension description", "chat", "inWorldChat", 
+    "This extension adds the in world chat. Players can send messages as their characters. This chat is intended to hold all interactions within the game world, while the player chat is for 'meta' communication."
+);
 
 /*
 console.log(window.loadEnquiry("chat", "commands"));
@@ -37,11 +38,13 @@ let chatTabDiv = document.createElement("div");
 chatTabDiv.id = "inWorldChat";
 chatTabDiv.setAttribute("class", "tab-content");
 chatTabDiv.style = "display:none;"
-chatTabDiv.innerHTML = '<div class="chat-container"><div class="chat-messages" id="inWorldChatMessages"></div></div><div class="chat-input-container"><input type="text" id="inWorldChatInput" class="chat-input" placeholder="Type your message..."></input><div class="dropdown-and-button"><select id="characterSelect" class="character-select"></select><button class="send-button" onclick="inWorldChat.confirm()">Send</button></div></div>'
+chatTabDiv.innerHTML = '<div class="chat-container"><div class="chat-messages" id="inWorldChatMessages"><div id="scroll-anchor-in-world-chat"></div></div></div><div class="chat-input-container"><input type="text" id="inWorldChatInput" class="chat-input" placeholder="Type your message..."></input><div class="dropdown-and-button"><select id="characterSelect" class="character-select"></select><button class="send-button" onclick="inWorldChat.confirm()">Send</button></div></div>'
 /*
     <div class="tab-content" id="inWorldChat" style="display:none;"">
         <div class="chat-container">
-            <div class="chat-messages" id="inWorldChatMessages"></div>
+            <div class="chat-messages" id="inWorldChatMessages">
+                <div id="scroll-anchor-in-world-chat"></div>
+            </div>
         </div>
         <div class="chat-input-container">
             <input type="text" id="inWorldChatInput" class="chat-input" placeholder="Type your message..."></input>
@@ -95,6 +98,7 @@ const inWorldChat = {
         textInput: document.getElementById("inWorldChatInput"),
         characterInput: document.getElementById("characterSelect"),
         messageArea: document.getElementById("inWorldChatMessages"),
+        anchor: document.getElementById("scroll-anchor-in-world-chat"),
         
         // Helper functions that add the chat components into DOM
         displaySystemMessage(text) {
@@ -104,7 +108,7 @@ const inWorldChat = {
             message.textContent = text;
             
             // Add it to DOM
-            this.messageArea.appendChild(message);
+            this.messageArea.insertBefore(message, this.anchor);
         },
         displayCharacterHeader(characterName) {
             // Create the header
@@ -125,7 +129,7 @@ const inWorldChat = {
             // Assemble and add to DOM
             header.appendChild(img);
             header.appendChild(name);
-            this.messageArea.appendChild(header);
+            this.messageArea.insertBefore(header, this.anchor);
         },
         displayCharacterMessage(text) {
             // Create the character message
@@ -134,7 +138,7 @@ const inWorldChat = {
             message.textContent = text;
 
             // Add it to DOM
-            this.messageArea.appendChild(message);
+            this.messageArea.insertBefore(message, this.anchor);
         },
 
         // Function to display any component
@@ -168,10 +172,13 @@ const inWorldChat = {
                 inWorldChatDocumentMockup.chatMessages.push(header);
             }
 
-            // Add the message
             let message = new chatComponent("message", this.internal.textInput.value);
-
+            
+            // Add the message to DOM and scroll the chat
             this.internal.addChatComponent(message);
+            this.internal.anchor.scrollIntoView({ behavior: 'smooth' });
+
+            // Add the message to Document
             inWorldChatDocumentMockup.chatMessages.push(message);
 
             // Clear the text area
@@ -183,7 +190,11 @@ const inWorldChat = {
     sendSystemMessage(text) {
         let systemMessage = new chatComponent("system", text);
 
+        // Add the system message to DOM and scroll the chat
         this.internal.addChatComponent(systemMessage);
+        this.internal.anchor.scrollIntoView({ behavior: 'smooth' });
+
+        // Add the system message to Document
         inWorldChatDocumentMockup.chatMessages.push(systemMessage);
     },
 
@@ -192,7 +203,7 @@ const inWorldChat = {
         character = document.createElement("option");
         character.value = character.innerHTML = character.id = name;
         this.internal.characterInput.add(character);
-    }
+    },
 }
 
 // Set a keybind to send a message
@@ -212,6 +223,9 @@ window.defineAPI("in world chat system message", (args) => {
 for (i of inWorldChatDocumentMockup.chatMessages) {
     inWorldChat.internal.addChatComponent(i);
 }
+
+// Scroll the chat
+inWorldChat.internal.anchor.scrollIntoView({ behavior: 'smooth' });
 
 // test
 inWorldChat.addCharacter("character1");

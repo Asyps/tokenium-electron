@@ -19,7 +19,7 @@ playerChat.internal.displayLocalCommandOutput = (data) => {
 
     // Assemble and display
     outerDiv.appendChild(innerDiv);
-    playerChat.internal.messageArea.appendChild(outerDiv);
+    playerChat.internal.messageArea.insertBefore(outerDiv, playerChat.internal.anchor);
 }
 playerChat.internal.displayPublicCommandOutput = (data) => {
     // Create the outer div
@@ -33,7 +33,7 @@ playerChat.internal.displayPublicCommandOutput = (data) => {
 
     // Assemble and display
     outerDiv.appendChild(innerDiv);
-    playerChat.internal.messageArea.appendChild(outerDiv);
+    playerChat.internal.messageArea.insertBefore(outerDiv, playerChat.internal.anchor);
 }
 playerChat.internal.displayErrorCommandOutput = (data) => {
     // Create the outer div
@@ -47,7 +47,7 @@ playerChat.internal.displayErrorCommandOutput = (data) => {
 
     // Assemble and display
     outerDiv.appendChild(innerDiv);
-    playerChat.internal.messageArea.appendChild(outerDiv);
+    playerChat.internal.messageArea.insertBefore(outerDiv, playerChat.internal.anchor);
 }
 
 // Swap the addChatComponent function for one that supports these types
@@ -79,19 +79,24 @@ playerChat.internal.addChatComponent = (component) => {
 
 // Shortcut functions for command outputs
 playerChat.commandLocal = (text) => {
+    // Add the command output to DOM and scroll the chat, don't include the output in shared document
     playerChat.internal.addChatComponent(new chatComponent("command local", text));
-    // Don't include the output in shared document
+    playerChat.internal.anchor.scrollIntoView({ behavior: 'smooth' });
 }
 playerChat.commandPublic = (text) => {
     publicOut = new chatComponent("command public", text);
-    playerChat.internal.addChatComponent(publicOut);
     
+    // Add the command output to DOM and scroll the chat
+    playerChat.internal.addChatComponent(publicOut);
+    playerChat.internal.anchor.scrollIntoView({ behavior: 'smooth' });
+
     // Do include the output in shared document
     chatDocumentMockup.push(publicOut);
 }
 playerChat.commandError = (text) => {
+    // Add the command output to DOM and scroll the chat, don't include the output in shared document
     playerChat.internal.addChatComponent(new chatComponent("command error", text));
-    // Don't include the output in shared document
+    playerChat.internal.anchor.scrollIntoView({ behavior: 'smooth' });
 }
 
 
@@ -107,9 +112,9 @@ class command {
 // The database that stores all commands
 const commandDatabase = {
     help: new command(
-        (flags, commandName) => {
-            if (commandName == undefined) {
-                // If no commandName is defined, display a manual to use the command systen and a list of available commands
+        (flags, mainName, secondaryName) => {
+            if (mainName == undefined) {
+                // If no parameter is defined, display a manual to use the command systen and a list of available commands
                 playerChat.commandLocal("To get into command mode, press / when the text field is empty. The character / won't appear in the text area. To cancel command mode, press packspace when the input field is empty.");
                 playerChat.commandLocal("The blue box is a local command output that other players won't see and that will not persist between sessions.");
                 // Add the next line directly to chat to not synchronise it between players, because it serves as an example only
@@ -119,24 +124,49 @@ const commandDatabase = {
                 // Generate the list of commands
                 let commandListStr = "List of available commands: ";
                 for (i in commandDatabase) {
-                    commandListStr += i + "; ";
+                    // If the command is a group, add " (group)" after the name
+                    commandListStr += i + (commandDatabase[i].hasOwnProperty("callback") ? "" : " (group)") + "; ";
                 }
                 commandListStr = commandListStr.slice(0, -2);        // Remove the last "; " characters from the string
 
                 // Show the list of commands
                 playerChat.commandLocal(commandListStr);
             }
-            else if (commandDatabase.hasOwnProperty(commandName)) {
-                // If the specified command exists, show it's syntax info and description
-                playerChat.commandLocal(commandDatabase[commandName].syntaxInfo);
-                playerChat.commandLocal(commandDatabase[commandName].description);
+            else if (secondaryName == undefined) {
+                // If only one parameter was specified...
+                if (commandDatabase.hasOwnProperty(mainName)) {
+                    if (commandDatabase[mainName].hasOwnProperty("callback")) {
+                        // If the specified entry exists and is a command, show it's syntax info and description
+                        playerChat.commandLocal(commandDatabase[mainName].syntaxInfo);
+                        playerChat.commandLocal(commandDatabase[mainName].description);
+                    } 
+                    else {
+                        // If it's a group, list the commands within
+                        // Generate the list of commands
+                        let commandListStr = "List of commands in the " + mainName + " group: ";
+                        for (i in commandDatabase[mainName]) {
+                            commandListStr += i + "; ";
+                        }
+                        commandListStr = commandListStr.slice(0, -2);        // Remove the last "; " characters from the string
+                        playerChat.commandLocal(commandListStr);
+                    }
+                }
+                else {
+                    playerChat.commandError("The specified command or group '" + mainName + "' does not exist.");
+                }
             }
             else {
-                // If it doesn't, show an error
-                playerChat.commandError("The specified command '" + commandName + "' does not exist.");
+                if (commandDatabase.hasOwnProperty(mainName) && commandDatabase[mainName].hasOwnProperty(secondaryName)) {
+                    // If the command within the group exists, show it's syntax info and description
+                    playerChat.commandLocal(commandDatabase[mainName][secondaryName].syntaxInfo);
+                    playerChat.commandLocal(commandDatabase[mainName][secondaryName].description);
+                }
+                else {
+                    playerChat.commandError("The specified command '" + mainName + "' within the '" + secondaryName + "' group does not exist.");
+                }
             }
         },
-        "help [commandName]",
+        "help [[groupName] commandName]",
         "Shows the syntax and description of the specified command. If commandName is ommited, shows a manual to use the command system and list of all available commands instead.",
     ),
     moduleHelp: new command(
@@ -206,8 +236,6 @@ const commandDatabase = {
 }
 
 
-
-
 // Init
 playerChat.internal.button = document.getElementById("playerSendButton");
 playerChat.mode = "normal";
@@ -250,9 +278,14 @@ playerChat.confirm = () => {
                 commandArguments.splice(commandArguments.indexOf(i), 1);
             }
             
-            // If the command exists, execute it's callback
+            // If the entry exists, check if it's a command or a group 
             if (commandDatabase.hasOwnProperty(commandName)) {
-                commandDatabase[commandName].callback(flags=flags, ...commandArguments);
+                // If it's a command, run it, else go one in
+                if (commandDatabase[commandName].hasOwnProperty("callback")) commandDatabase[commandName].callback(flags=flags, ...commandArguments);
+                else {
+                    subCommandName = commandArguments.shift();
+                    commandDatabase[commandName][subCommandName].callback(flags=flags, ...commandArguments)
+                }
             }
             else {
                 playerChat.commandError("This command does not exist. To see the list of available commands, enter the help command");
@@ -262,8 +295,9 @@ playerChat.confirm = () => {
             playerChat.lastCommandText = playerChat.internal.textInput.value;
         }
         
-        // Clear the text area
+        // Clear the text area and scroll the chat
         playerChat.internal.textInput.value = "";
+        playerChat.internal.anchor.scrollIntoView({ behavior: 'smooth' });
     }
 }
 
@@ -319,7 +353,6 @@ window.defineAPI("register module description", (args) => {
     [moduleName, description] = args;
 
     moduleDescriptionDatabase[moduleName] = description;
-    console.log(moduleDescriptionDatabase);
 });
 window.defineAPI("register extension description", (args) => {
     [moduleName, extensionName, description] = args;
@@ -331,6 +364,34 @@ window.defineAPI("register extension description", (args) => {
 
     (extensionDescriptionDatabase[moduleName])[extensionName] = description;
 });
+
+// API for other modules to define their commands
+window.defineAPI("register command", (args) => {
+    [commandName, callbackString, syntaxInfo, description, groupName] = args;
+
+    // If the group isn't specified, add the command as is
+    if (groupName == undefined) commandDatabase[commandName] = new command(new Function("return " + callbackString)(), syntaxInfo, description);
+    else {
+        // If the group is specified but doesn't exist yet, create it
+        if (commandDatabase[groupName] == undefined) commandDatabase[groupName] = {}
+
+        // Add the command to the group within the database
+        commandDatabase[groupName][commandName] = new command(new Function("return " + callbackString)(), syntaxInfo, description);
+    } 
+});
+
+
+/*
+// API for other modules to display command results
+window.defineAPI("show command output", (args) => {
+    [type, message] = args;
+
+    if (type == "local") chat.playerChat.commandLocal(message);
+    else if (type == "public") chat.playerChat.commandPublic(message);
+    else chat.playerChat.commandError(message);
+});
+*/
+
 
 // Declare as loaded
 window.declareAsLoaded("chat", "commands");
