@@ -37,7 +37,7 @@ const playerChat = {
         // HTML components
         textInput: document.getElementById("playerChatInput"),
         messageArea: document.getElementById("playerChatMessages"),
-        anchor: document.getElementById("scroll-anchor"),
+        anchor: document.getElementById("playerChatScrollAnchor"),
         
         // Helper functions that add the chat components into DOM
         displaySystemMessage(text) {

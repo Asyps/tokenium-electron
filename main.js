@@ -346,7 +346,7 @@ ipcMain.handle("loadGame", async (ev, gameName) => {
     // Get the list of modules to load
     let modList = games[gameName];
     
-    // Obtain the window layout (first try getting the local one, if it doesn't exist, get it from server)
+    // Obtain the window layout (first try getting the local layout, if it doesn't exist, get the default layout from server)
     globals.windowLayout = await fileSystem.getWindowLayout();
     if ((Object.keys(globals.windowLayout)).length == 0) {
         // coming soon :tm:
@@ -383,18 +383,18 @@ ipcMain.handle("loadGame", async (ev, gameName) => {
         // Get the module window information
         let windowInfo = globals.windowLayout[i.name];
 
-        // If the window info exists, convert relative screen value to pixels
+        // If the info about the window exists, convert relative screen value to px
         if (windowInfo) {
             var width = Math.round(windowInfo.width * workAreaSize.width);
             var height = Math.round(windowInfo.height * workAreaSize.height);
             var x = Math.round(windowInfo.x * workAreaSize.width);
             var y = Math.round(windowInfo.y * workAreaSize.height);
         }
-        else {      // If the window info doesn't exist, use default values
-            var width = 800
-            var height = 600
-            var x = 50
-            var y = 50
+        else {      // If the info about the window doesn't exist, use default values in px
+            var width = 800;
+            var height = 600;
+            var x = 50;
+            var y = 50;
         }
 
         // Create the module window
@@ -434,30 +434,34 @@ ipcMain.handle("callFunction", async (ev, moduleName, functionName, args) => {
     if (moduleName == "") {
         for (i in active_windows) {
             try {
-                //let reply = await ipcMain.handleOnce("API-reply-" + functionName, (ev, reply) => reply);
+                // Send the event to all windows, no reply is expected
                 await active_windows[i].webContents.send("API-" + functionName, args);
-                //return reply; 
             }
             catch {
-                throw new Error("Module's window was closed.");
+                throw new Error("Module's window was closed. Broadcasting function: " + functionName);
                 // I can probably ignore this error. If window was closed, do nothing. Perhaps I can remove the destroyed object from active_windows
             }
         }
     }
     else {
         try {
+            // Create a promise for the reply, inside the promise, set the reply handler
             let reply = new Promise((resolve, reject) => {
                 ipcMain.handleOnce("API-reply-" + functionName, (ev, reply) => {
                     resolve(reply);
                 });
             });
             
+            // Send the event to the window
             active_windows[moduleName].webContents.send("API-" + functionName, args);
-            return await reply; 
+            
+            // Wait for the reply and return it
+            return await reply;
         }
         catch {
-            throw new Error("Module is not loaded or it's window was closed.");
+            throw new Error("Module is not loaded or it's window was closed. Called function: " + functionName);
             // Ig I can just ignore this error, if the module is not loaded or it's window was closed, simply do nothing
+            // Perhaps I can remove the destroyed object from active_windows if it was loaded before, and remove the event listener for the reply
         }
     }
 });
@@ -492,7 +496,7 @@ ipcMain.handle("moduleLoadNotice", (ev, moduleName, extensionName) => {
             active_windows[i].webContents.send("LOAD-" + eventName);
         }
         catch {
-            throw new Error("Module's window was closed.");
+            throw new Error("Module's window was closed. Broadcasting load notice for " + eventName);
             // I can probably ignore this error. If window was closed, do nothing. Perhaps I can remove the destroyed object from active_windows
         }
     }

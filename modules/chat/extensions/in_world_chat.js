@@ -38,12 +38,12 @@ let chatTabDiv = document.createElement("div");
 chatTabDiv.id = "inWorldChat";
 chatTabDiv.setAttribute("class", "tab-content");
 chatTabDiv.style = "display:none;"
-chatTabDiv.innerHTML = '<div class="chat-container"><div class="chat-messages" id="inWorldChatMessages"><div id="scroll-anchor-in-world-chat"></div></div></div><div class="chat-input-container"><input type="text" id="inWorldChatInput" class="chat-input" placeholder="Type your message..."></input><div class="dropdown-and-button"><select id="characterSelect" class="character-select"></select><button class="send-button" onclick="inWorldChat.confirm()">Send</button></div></div>'
+chatTabDiv.innerHTML = '<div class="chat-container"><div class="chat-messages" id="inWorldChatMessages"><div class="scroll-anchor" id="inWorldChatScrollAnchor"></div></div></div><div class="chat-input-container"><input type="text" id="inWorldChatInput" class="chat-input" placeholder="Type your message..."></input><div class="dropdown-and-button"><select id="characterSelect" class="character-select"></select><button class="send-button" onclick="inWorldChat.confirm()">Send</button></div></div>'
 /*
     <div class="tab-content" id="inWorldChat" style="display:none;"">
         <div class="chat-container">
             <div class="chat-messages" id="inWorldChatMessages">
-                <div id="scroll-anchor-in-world-chat"></div>
+                <div class="scroll-anchor" id="inWorldChatScrollAnchor"></div>
             </div>
         </div>
         <div class="chat-input-container">
@@ -98,7 +98,7 @@ const inWorldChat = {
         textInput: document.getElementById("inWorldChatInput"),
         characterInput: document.getElementById("characterSelect"),
         messageArea: document.getElementById("inWorldChatMessages"),
-        anchor: document.getElementById("scroll-anchor-in-world-chat"),
+        anchor: document.getElementById("inWorldChatScrollAnchor"),
         
         // Helper functions that add the chat components into DOM
         displaySystemMessage(text) {

@@ -53,15 +53,21 @@ contextBridge.exposeInMainWorld("callFunctionOnLoaded", async (moduleExtensionPa
     // Checks if the module/extension is loaded
     if (await ipcRenderer.invoke("moduleLoadEnquiry", moduleName, extensionName)) {
         // If it is, call the function directly
-        ipcRenderer.invoke("callFunction", moduleName, functionName, args);
+        return await ipcRenderer.invoke("callFunction", moduleName, functionName, args);
     }
     else {
         // If it is not, set an onload event to call it once it gets loaded
         let loadName = (extensionName == undefined) ? moduleName : moduleName + ":" + extensionName;
 
-        ipcRenderer.once("LOAD-" + loadName, (ev) => {
-            ipcRenderer.invoke("callFunction", moduleName, functionName, args);
+        // Create a promise that calls the function, so that this function can wait for reply
+        let reply = new Promise((resolve, reject) => { 
+            ipcRenderer.once("LOAD-" + loadName, (ev) => {
+                resolve(ipcRenderer.invoke("callFunction", moduleName, functionName, args));
+            });
         });
+
+        // Wait for the reply
+        return await reply;
     }
 });
 
