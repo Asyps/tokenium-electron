@@ -155,7 +155,3 @@ for (i of chatDocumentMockup.chatMessages) {
 
 // Scroll the chat
 playerChat.internal.anchor.scrollIntoView({ behavior: 'smooth' });
-
-
-// Declare as loaded
-window.declareAsLoaded("chat");

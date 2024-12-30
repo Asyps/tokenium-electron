@@ -414,7 +414,7 @@ window.defineAPI("addToken", (args) => {
 });
 
 async function defineCommannds() {
-// Command for resizing the tokenium
+    // Command for resizing the tokenium
     await window.callFunctionOnLoaded(["chat", "commands"], "register command", "size", (async (flags, width, height, mapName) => {
             // Parse the arguments
             if (width != undefined) width = parseInt(width);
@@ -456,8 +456,3 @@ async function defineCommannds() {
 }
 
 defineCommannds() // Only run the function if user has permission for altering tokenium
-
-
-
-// Declare as loaded
-window.declareAsLoaded("tokenium");

@@ -21,5 +21,3 @@ function calculateResult() {
         display.value = 'Error';
     }
 }
-
-window.declareAsLoaded("calculator");

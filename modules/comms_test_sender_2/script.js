@@ -5,5 +5,3 @@ function sendMessage(n) {
 function sendMessageBroadcast() {
     window.callFunction("", "change displayed text", "Message from sender 2");
 }
-
-window.declareAsLoaded("comms_test_sender_2");

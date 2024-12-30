@@ -1,5 +1,21 @@
 const { ipcRenderer, contextBridge } = require("electron");
 
+// A helper function for resolving the moduleExtensionPair arguments
+function processArgument(moduleExtensionPair) {
+    // If moduleExtensionPair is a string, put it into an array so that the destructuring works
+    if (typeof moduleExtensionPair == "string") return [moduleExtensionPair];
+        
+    // If it is an array, return it as is
+    return moduleExtensionPair;
+}
+
+// Internal function to control loading extensions and postload script
+contextBridge.exposeInMainWorld("announceScriptLoad", (moduleName, scriptName, isSuccess) => {
+    ipcRenderer.invoke("LOAD-SCRIPT-" + moduleName + ":" + scriptName, isSuccess);
+});
+
+
+// API system
 // Function to call an API function from another module
 contextBridge.exposeInMainWorld("callFunction", async (moduleName, functionName, ...args) => {
     return await ipcRenderer.invoke("callFunction", moduleName, functionName, args);
@@ -13,67 +29,72 @@ contextBridge.exposeInMainWorld("defineAPI", (functionName, callback) => {
 });
 
 
-// Module load control
-
-// Function to declare module as loaded
-contextBridge.exposeInMainWorld("declareAsLoaded", (moduleName, extensionName) => {
-    ipcRenderer.invoke("moduleLoadNotice", moduleName, extensionName);
-});
-
-
 // Function to enquire if a module is loaded (needs an await before it when used)
-// Might get deleted, see note at the bottom of the program
 contextBridge.exposeInMainWorld("loadEnquiry", async (moduleName, extensionName) => {
     return ipcRenderer.invoke("moduleLoadEnquiry", moduleName, extensionName);
 });
 
-// Function to set a listener for module/extension load event
-// Might get deleted, see note at the bottom of the program
-contextBridge.exposeInMainWorld("onLoaded", (callback, moduleName, extensionName) => {
-    let loadName = (extensionName == undefined) ? moduleName : moduleName + ":" + extensionName;
+// Function to set a callback for when a module gets loaded. Specify an extension to check if it should be loaded.
+contextBridge.exposeInMainWorld("onLoaded", async (moduleExtensionPair, callback, ...args) => {
+    // Destructure moduleExtensionPair
+    var [moduleName, extensionName] = processArgument(moduleExtensionPair);
 
-    ipcRenderer.once("LOAD-" + loadName, (ev) => {
-        callback();
-    });
+    // Enquire about the module/extension pair
+    let loadInfo = await ipcRenderer.invoke("moduleLoadEnquiry", moduleName, extensionName);    
+    // This gets an array of two boolean values:     should the specified thing be loaded;   is the module loaded
+
+    // If the module/extension shouldn't be loaded, ignore the call
+    if (loadInfo[0]) {
+        if (loadInfo[1]) {
+            // If the  module is loaded, call the function directly
+            return await callback(args);
+        }
+        else {
+            // If it is not, set an onload event to call it once it gets loaded
+
+            // Create a promise that sets the event to call the function, so that the reply can be awaited
+            return await new Promise((resolve, reject) => { 
+                ipcRenderer.once("LOAD-" + moduleName, async (ev) => {
+                    resolve(await callback(args));
+                });
+            });
+        }
+    }
 });
 
 // Function to call an API function from another module on startup without worries about load loader
-// This function combines the behavior of callFunction, loadEnquiry and onLoaded (kinda)
 contextBridge.exposeInMainWorld("callFunctionOnLoaded", async (moduleExtensionPair, functionName, ...args) => {
-    // Process arguments
-    if (Array.isArray(moduleExtensionPair)) {
-        // If moduleExtensionPair is an array, destructure it
-        var [moduleName, extensionName] = moduleExtensionPair;
-    }
-    else {
-        // If it is a single string, it specifies the moduleName
-        var moduleName = moduleExtensionPair;
-    }
+    console.log();
+    
+    // Destructure moduleExtensionPair
+    var [moduleName, extensionName] = processArgument(moduleExtensionPair);
 
-    // Checks if the module/extension is loaded
-    if (await ipcRenderer.invoke("moduleLoadEnquiry", moduleName, extensionName)) {
-        // If it is, call the function directly
-        return await ipcRenderer.invoke("callFunction", moduleName, functionName, args);
-    }
-    else {
-        // If it is not, set an onload event to call it once it gets loaded
-        let loadName = (extensionName == undefined) ? moduleName : moduleName + ":" + extensionName;
+    // Enquire about the module/extension pair
+    let loadInfo = await ipcRenderer.invoke("moduleLoadEnquiry", moduleName, extensionName);    
+    // This gets an array of two boolean values:     should the specified thing be loaded;   is the module loaded
 
-        // Create a promise that calls the function, so that this function can wait for reply
-        let reply = new Promise((resolve, reject) => { 
-            ipcRenderer.once("LOAD-" + loadName, (ev) => {
-                resolve(ipcRenderer.invoke("callFunction", moduleName, functionName, args));
+    console.log("callFunctionOnLoaded", functionName, loadInfo);
+
+    // If the module/extension shouldn't be loaded, ignore the call
+    if (loadInfo[0]) {
+        if (loadInfo[1]) {
+            // If the  module is loaded, call the function directly
+            console.log("direct call", functionName);
+            return await ipcRenderer.invoke("callFunction", moduleName, functionName, args);
+        }
+        else {
+            // If it is not, set an onload event to call it once it gets loaded
+
+            console.log("event handler", functionName);
+
+            // Create a promise that sets the event to call the function, so that the reply can be awaited
+            return await new Promise((resolve, reject) => { 
+                ipcRenderer.once("LOAD-" + moduleName, async (ev) => {
+                    resolve(await ipcRenderer.invoke("callFunction", moduleName, functionName, args));
+                });
             });
-        });
-
-        // Wait for the reply
-        return await reply;
+        }
     }
 });
 
-// The onLoaded as it is now has a diffirent behavior than callFunctionOnLoaded because it allows any block of code to be run after the module is loaded
-// while callFunctionOnLoaded is designed specifically for inter-module API calls. Therefore it might stay, but currently has no use in the program.
-// But loadEnquiry might not be useful at all so it might be deleted unless an use is found.
-
-// Possible TO-DO - change all method arguments that specify a module and an extension to the moduleExtensionPair format - to have consistent arguments
-// The one place where moduleExtensionPair is currently used requires it
+// The onLoaded and loadEnquiry functions are currently not used in the program.

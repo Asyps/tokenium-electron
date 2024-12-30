@@ -6,9 +6,6 @@ const { app, BrowserWindow, ipcMain, screen } = require('electron');
 const fs = require("fs/promises");
 const path = require("path");
 
-// A place to put the main process global variables
-globals = {};
-
 // Close the application when all windows are closed
 app.on("window-all-closed", () => {
     // If a game is chosen, save the window layout
@@ -16,97 +13,71 @@ app.on("window-all-closed", () => {
     app.quit();
 });
 
-// Class for handling modules
-class moduleInfo {
-    constructor(name, extensions=[]) {
-        this.name = name;
-        this.isLoaded = false;          // When a module is loaded, all of it's scripts (not counting extension scripts) have finished running
+// Mockup, will later get the info from server/files/whatever
+let requiredModuleList = {
+    tokenium_test: {
+        "tokenium": []
+    },
+    chat_test: {
+        "chat": []
+    },
+    full_test: {
+        "chat": ["in_world_chat", "commands"],
+        "tokenium": ["rulers"]
+    },
+    desert: {
+        "tokenium": [],
+        "chat": ["commands"],
+        "calculator": []
+    },
+};
+let selectedModuleList = {
+    tokenium_test: {
+        "tokenium": ["rulers"]
+    },
 
-        // Initialise the extensions
-        this.extensions = {};
-        for (i of extensions) this.extensions[i] = false;
-    }
+    chat_test: {
+        "chat": ["in_world_chat", "commands"]
+    },
+    full_test: {
+        "chat": ["in_world_chat", "commands"],
+        "tokenium": ["rulers"]
+    },
+    desert: {
+        "tokenium": [],
+        "chat": ["commands", "in_world_chat"],
+        "calculator": []
+    },
 };
 
-// Main menu
-app.whenReady().then(() => {
-    // Open the main menu
-    globals.mainMenu = new BrowserWindow({
-        // To do - security stuff
-        width: 800,
-        height: 600,
-        x: 25,
-        y: 50,
-        webPreferences: {
-            preload: path.join(__dirname, "main_menu", "preload.js")
-        }
-    });
+// A place to put the main process global variables
+const globals = {
+    // For these two dictionaries, each key:value pair encodes                    str moduleName : str[] extensionNameList
+    availableModules: {},           // List of modules and extensions available
+    selectedModules: {},            // List of modules and extensions selected to be loaded this game
 
-    // Load the .js
-    globals.mainMenu.loadFile(path.join(__dirname, "main_menu", "index.html"));
-
-    // Handler for the module selector window
-    globals.mainMenu.webContents.setWindowOpenHandler(() => {
-        // To do - security stuff
-        return {
-            action: "allow",
-            overrideBrowserWindowOptions: {
-                width: 400,
-                height: 500,
-
-                frame: true,
-                resizable: true,
-                
-                modal: true,
-                parent: globals.mainMenu,
-
-                webPreferences: {
-                    preload: path.join(__dirname, "module_selector", "preload.js")
-                }
-            }
-        }
-    });
-});
-
-
-// Mockup, will later get the info from server/files/whatever
-let games = {
-    tokenium_test: [
-        new moduleInfo("tokenium", ["rulers"])
-    ],
-    desert: [
-        new moduleInfo("tokenium", ["startup"]),
-        new moduleInfo("chat", []),
-        new moduleInfo("calculator", [])
-    ],
-    chat_test: [
-        new moduleInfo("chat", ["in_world_chat", "commands"])
-    ],
-    full_test: [
-        new moduleInfo("chat", ["in_world_chat", "commands"]),
-        new moduleInfo("tokenium", ["rulers"])
-    ],
+    // A dictionary of all active window objects. Each key:value pair encodes        str moduleName : BrowserWindow browserWindow
+    activeWindows: {}
 };
 
 
 // Functions for reading/modifying file system contents
 const fileSystem = {
-    async getAvailableModules() {
+    // Goes through the files and builds a list of all available modules, which is added into globals
+    async buildAvailableModuleList() {
         var dirPath = path.join(__dirname, "modules");
-        var moduleList = [];
 
         // Open the modules directory
         try {
             var modulesDir = await fs.opendir(dirPath);
         } catch {
-            // If it doesn't exist, create it and return empty list
+            // If it doesn't exist, create it and abort the function
             fs.mkdir(dirPath);
-            return moduleList;
+            return;
         } 
 
         // Iterate over entries
         for await (const moduleDirent of modulesDir) {
-
             // Check if entry is a directory, if not, throw error
             if (moduleDirent.isDirectory()) {
                 let moduleName = moduleDirent.name;
@@ -135,22 +106,22 @@ const fileSystem = {
                             extensions.push(path.basename(extensionName, ".js"));
                         }
                         else {
-                            throw new Error("The folder 'extensions' of the module '" + moduleName + "' should contain only .js files.")
+                            throw new Error("The folder 'extensions' of the module '" + moduleName + "' should contain only .js files.");
                         }
                     }
                 }
                 
-                moduleList.push(new moduleInfo(moduleName, extensions));
+                // Add the module to the globals
+                globals.availableModules[moduleName] = extensions;
 
             }
             else {
                 throw new Error("The folder 'modules' should contain only folders.");
             }
         }
-        
-        return moduleList;
     },
 
+    // Goes through the files and builds a list of existing games, which is returned
     async getExistingGames() {
         var dirPath = path.join(__dirname, "games");
         var gameList = [];
@@ -178,6 +149,7 @@ const fileSystem = {
         return gameList;
     },
 
+    // Goes through the files and builds a list of available profile pictures, which is returned
     async getAvailableProfilePictures() {
         var dirPath = path.join(__dirname, "profile_pics");
         let profilePictureList = [];
@@ -206,6 +178,7 @@ const fileSystem = {
         return profilePictureList;
     },
 
+    // Goes through the asset folder of the currently selected game and builds a list of available assets, which is returned
     async getAvailableAssets() {
         if (!globals.gameName) throw new Error("Tried to run a function dependent on the game name while no game was selected.");
         
@@ -248,6 +221,7 @@ const fileSystem = {
         return assetList;
     },
 
+    // Adds a profile picture to the profile_pics folder
     async addProfilePicture(playerName, data) {
         let pfpPath = path.join(__dirname, "profile_pics", playerName + ".png");
 
@@ -261,6 +235,7 @@ const fileSystem = {
         }
     },
 
+    // Adds an asset to the specified local path within the selected game's asset folder
     async addAsset(localPath, data) {
         if (!globals.gameName) throw new Error("Tried to run a function dependent on the game name while no game was selected.");
 
@@ -277,6 +252,7 @@ const fileSystem = {
         }
     },
 
+    // Removes an asset from the specified local path within the selected game's asset folder
     async removeAsset(localPath) {
         if (!window.gameName) throw new Error("Tried to run a function dependent on the game name while no game was selected.");
 
@@ -312,6 +288,7 @@ const fileSystem = {
         fs.rm(await checkParentFolder(assetPath), {recursive: true});
     },
 
+    // Reads the window_layout.json file of the selected game and returns the window layout specified within
     async getWindowLayout() {
         if (!globals.gameName) throw new Error("Tried to run a function dependent on the game name while no game was selected.")
 
@@ -329,6 +306,7 @@ const fileSystem = {
         
     },
 
+    // Writes the current window layout from globals into the window_layout.json file of the selected game
     async saveWindowLayout() {
         if (!globals.gameName) throw new Error("Tried to run a function dependent on the game name while no game was selected.");
 
@@ -338,20 +316,64 @@ const fileSystem = {
     }
 }
 
+// Build the list of available modules
+fileSystem.buildAvailableModuleList();
+
 // Main menu handlers
 ipcMain.handle("getGameList", async () => await fileSystem.getExistingGames());
-ipcMain.handle("getModuleList", async () => await fileSystem.getAvailableModules());
-ipcMain.handle("getSelectedModules", (ev, gameName) => games[gameName]);
-ipcMain.handle("setSelectedModules", (ev, gameName, moduleList) => games[gameName] = moduleList);
+ipcMain.handle("getAvailableModules", async () => globals.availableModules);
+ipcMain.handle("getRequiredModules", (ev, gameName) => requiredModuleList[gameName]);   // Mockup
+ipcMain.handle("getSelectedModules", (ev, gameName) => selectedModuleList[gameName]);   // Mockup
+
+ipcMain.handle("setSelectedModules", (ev, moduleData) => globals.selectedModules = moduleData);
+
+// Main menu
+app.whenReady().then(() => {
+    // Open the main menu
+    globals.mainMenu = new BrowserWindow({
+        // To do - security stuff
+        width: 800,
+        height: 600,
+        x: 25,
+        y: 50,
+        webPreferences: {
+            preload: path.join(__dirname, "main_menu", "preload.js")
+        }
+    });
+
+    // Load the .js
+    globals.mainMenu.loadFile(path.join(__dirname, "main_menu", "index.html"));
+
+    // Handler for the module selector window
+    globals.mainMenu.webContents.setWindowOpenHandler(() => {
+        // To do - security stuff
+        return {
+            action: "allow",
+            overrideBrowserWindowOptions: {
+                width: 400,
+                height: 500,
+
+                frame: true,
+                resizable: true,
+                
+                modal: true,
+                parent: globals.mainMenu,
+
+                webPreferences: {
+                    preload: path.join(__dirname, "module_selector", "preload.js")
+                }
+            }
+        }
+    });
+});
 
 // Load game procedure
-var active_windows = {};
 ipcMain.handle("loadGame", async (ev, gameName) => {
     // Set variables
     globals.gameName = gameName;
-
-    // Get the list of modules to load
-    let modList = games[gameName];
+    
+    // Get the main display width and height
+    const workAreaSize = screen.getPrimaryDisplay().workAreaSize;
     
     // Obtain the window layout (first try getting the local layout, if it doesn't exist, get the default layout from server)
     globals.windowLayout = await fileSystem.getWindowLayout();
@@ -382,13 +404,47 @@ ipcMain.handle("loadGame", async (ev, gameName) => {
         }
     }
     
-    // Get the main display width and height
-    const workAreaSize = screen.getPrimaryDisplay().workAreaSize;
+    // A function that loads a script
+    function loadScript(moduleWindow, moduleName, scriptName, isPostload=false) {
+        // Create a promise that resolves once the script has finished loading
+        return new Promise((resolve, reject) => {
+            // Create a handler for the message about the script loading or failing.
+            ipcMain.handleOnce("LOAD-SCRIPT-" + moduleName + ":" + scriptName, (ev, didScriptLoad) => {
+                if (didScriptLoad) resolve();
+                reject("Script failed to load: " + scriptName);
+            });
+
+            // Execute the code to add the script
+            if (isPostload) {    
+                // If the script is a postload, the path to the script doesn't include the extensions folder.
+                moduleWindow.webContents.executeJavaScript("window.s = document.createElement('script'); window.s.src = '" + scriptName + ".js'; window.s.onload = () => window.announceScriptLoad('" + moduleName + "', '" + scriptName + "', true); window.s.onerror = () => window.announceScriptLoad('" + moduleName + "', '" + scriptName + "', false); document.body.appendChild(window.s); delete window.s;");
+                    /*
+                    window.s = document.createElement('script');
+                    window.s.src = '" + scriptName + ".js';
+                    window.s.onload = () => window.announceScriptLoad('" + moduleName + "', '" + scriptName + "', true);
+                    window.s.onerror = () => window.announceScriptLoad('" + moduleName + "', '" + scriptName + "', false);
+                    document.body.appendChild(window.s);
+                    delete window.s;         
+                    */
+            }
+            else {
+                moduleWindow.webContents.executeJavaScript("window.s = document.createElement('script'); window.s.src = 'extensions\\" + path.sep + scriptName + ".js'; window.s.onload = () => window.announceScriptLoad('" + moduleName + "', '" + scriptName + "', true); window.s.onerror = () => window.announceScriptLoad('" + moduleName + "', '" + scriptName + "', false); document.body.appendChild(window.s); delete window.s;");
+                    /*
+                    window.s = document.createElement('script');
+                    window.s.src = 'extensions" + path.sep + scriptName + ".js';
+                    window.s.onload = () => window.announceScriptLoad('" + moduleName + "', '" + scriptName + "', true);
+                    window.s.onerror = () => window.announceScriptLoad('" + moduleName + "', '" + scriptName + "', false);
+                    document.body.appendChild(window.s);
+                    delete window.s;         
+                    */
+            }
+        });
+    }
 
     // For every module needed to be loaded
-    for (i of modList) {
+    for (let moduleName in globals.selectedModules) {
         // Get the module window information
-        let windowInfo = globals.windowLayout[i.name];
+        let windowInfo = globals.windowLayout[moduleName];   // The keys of globals.selectedModules represent module names
 
         // If the info about the window exists, convert relative screen value to px
         if (windowInfo) {
@@ -404,6 +460,7 @@ ipcMain.handle("loadGame", async (ev, gameName) => {
             var y = 50;
         }
 
+
         // Create the module window
         let moduleWindow = new BrowserWindow({
             // to do - security stuff
@@ -417,17 +474,74 @@ ipcMain.handle("loadGame", async (ev, gameName) => {
         });
 
         // Assign the html file
-        moduleWindow.loadFile(path.join(__dirname, "modules", i.name, "index.html"));
+        moduleWindow.loadFile(path.join(__dirname, "modules", moduleName, "index.html"));
 
-        // Add extensions
-        for (j of i.extensions) {
-            moduleWindow.webContents.executeJavaScript("window.s = document.createElement('script'); window.s.src = 'extensions\\" + path.sep + j + ".js'; document.body.appendChild(window.s); delete window.s;");
-        }
+        // Create the event handler for loading the extensions and postprocess script
+        moduleWindow.webContents.once("did-finish-load", () => {
+            // Once the main module has finished loading...
 
-        // Add the window to the window list
-        active_windows[i.name] = moduleWindow;
+            // Run the extension adding functions and collect the promises in extensionLoadPromises
+            let extensionLoadPromises = [];
+            for (let extensionName of globals.selectedModules[moduleName]) {     // The values of globals.selectedModules are lists of extension names
+                extensionLoadPromises.push(loadScript(moduleWindow, moduleName, extensionName));    
+            }
+
+            Promise.all(extensionLoadPromises).then(
+                () => {
+                    // If all the extensions succesfully load, load the postload script
+                    return loadScript(moduleWindow, moduleName, "postload", true);
+                },
+                async (message) => { 
+                    // If any extension fails to load, return a rejected promise to the next .then()
+                    throw new Error(message) 
+                }
+            ).then(
+                () => {
+                    // If the postload script succesfully loads, declare the module as loaded
+
+                    // Broadcast the load event
+                    for (i in globals.activeWindows) {
+                        try {
+                            console.log("Sending load event " + moduleName + " to " + i)
+                            globals.activeWindows[i].webContents.send("LOAD-" + moduleName);
+                        }
+                        catch {
+                            // If the event sending fails, the window was probably closed
+                            // Remove the destroyed window object from the list of active windows
+                            console.log("failed sending load event " + moduleName + " to " + i)
+                            globals.activeWindows.splice(i, 1);
+                        }
+                    }
+                    
+                    // Put the browser window into the active list
+                    globals.activeWindows[moduleName] = moduleWindow;
+                },
+                (message) => {
+                    // This error handler can be triggered by one of the extensions failing, or by the postload script failing.
+
+                    // If one of the extensions fails to load, throw an error
+                    if (message != "Script failed to load: postload") throw new Error(message);
+
+                    // If the postload script fails, still declare the module as loaded
+                    // Broadcast the load event
+                    for (i in globals.activeWindows) {
+                        try {
+                            globals.activeWindows[i].webContents.send("LOAD-" + moduleName);
+                        }
+                        catch {
+                            // If the event sending fails, the window was probably closed
+                            // Remove the destroyed window object from the list of active windows
+                            globals.activeWindows.splice(i, 1);
+                        }
+                    }
+                    
+                    // Put the browser window into the active list
+                    globals.activeWindows[moduleName] = moduleWindow;
+                }
+            );
+        });
     }
-    
+
     // Close main menu
     globals.mainMenu.close();
 }); 
@@ -439,75 +553,54 @@ ipcMain.handle("loadGame", async (ev, gameName) => {
 ipcMain.handle("callFunction", async (ev, moduleName, functionName, args) => {
     // Empty module name => broadcast
     if (moduleName == "") {
-        for (i in active_windows) {
+        for (let windowName in globals.activeWindows) {
             try {
                 // Send the event to all windows, no reply is expected
-                await active_windows[i].webContents.send("API-" + functionName, args);
+                await globals.activeWindows[windowName].webContents.send("API-" + functionName, args);
             }
             catch {
-                // Remove the destroyed object from the list
-                active_windows.splice(i, 1);
-                // I can probably ignore this error. If window was closed, do nothing.
+                // If the event sending fails, the window was probably closed
+                // Remove the destroyed window object from the list of active windows, remove the module entry from loaded modules
+                globals.activeWindows.splice(windowName, 1);
             }
         }
     }
     else {
-        try {
-            // Create a promise for the reply, inside the promise, set the reply handler
-            let reply = new Promise((resolve, reject) => {
-                ipcMain.handleOnce("API-reply-" + functionName, (ev, reply) => {
-                    resolve(reply);
+        // If the module isn't supposed to be loaded, ignore the call
+        if (globals.selectedModules.hasOwnProperty(moduleName)) {
+            try {
+                // Create a promise for the reply, inside the promise, set the reply handler
+                let reply = new Promise((resolve, reject) => {
+                    ipcMain.handleOnce("API-reply-" + functionName, (ev, reply) => {
+                        resolve(reply);
+                    });
                 });
-            });
-            
-            // Send the event to the window
-            active_windows[moduleName].webContents.send("API-" + functionName, args);
-            
-            // Wait for the reply and return it
-            return await reply;
-        }
-        catch {
-            throw new Error("Module is not loaded or it's window was closed. Called function: " + functionName);
-            // Ig I can just ignore this error, if the module is not loaded or it's window was closed, simply do nothing
-            // Perhaps I can remove the destroyed object from active_windows if it was loaded before, and remove the event listener for the reply
+                
+                // Send the event to the window
+                globals.activeWindows[moduleName].webContents.send("API-" + functionName, args);
+                
+                // Wait for the reply and return it
+                return await reply;
+            }
+            catch {
+                throw new Error("Module is not loaded or it's window was closed. Called function: " + functionName);
+                // Ig I can just ignore this error, if the module is not loaded or it's window was closed, simply do nothing
+                // Perhaps I can remove the destroyed object from activeWindows if it was loaded before, and remove the event listener for the reply
+            }
         }
     }
 });
 
-const loadedModules = {}
 // Handles questions about loaded modules or extensions
 ipcMain.handle("moduleLoadEnquiry", (ev, moduleName, extensionName) => {
-    let isModuleLoaded = loadedModules.hasOwnProperty(moduleName);
+    // This function returns two boolean values in the format [shouldSpecifiedThingBeLoaded, isModuleLoaded]
+
+    // Check if the module should be loaded
+    let shouldModuleBeLoaded = globals.selectedModules.hasOwnProperty(moduleName);
+
+    if (!shouldModuleBeLoaded) return [false, false];       // If it shouldn't be loaded, the awnsers are known
     
-    // If no extension name is specified, return the awnser for the module
-    if (extensionName == undefined) return isModuleLoaded;
-    // If it is specified, only return the awnser for the extension if the module is loaded
-    else return isModuleLoaded && loadedModules[moduleName].includes(extensionName);
-});
-
-// Handles requests to announce that a module has been loaded
-ipcMain.handle("moduleLoadNotice", (ev, moduleName, extensionName) => {
-    if (extensionName == undefined) {
-        // If extensionName is undefined, process the event for a module
-        loadedModules[moduleName] = [];
-        var eventName = moduleName;
-    }
-    else {
-        // Else process it for the extension
-        loadedModules[moduleName].push(extensionName);
-        var eventName = moduleName + ":" + extensionName;
-    }
-
-    // Broadcast the load event
-    for (i in active_windows) {
-        try {
-            active_windows[i].webContents.send("LOAD-" + eventName);
-        }
-        catch {
-            // Remove the destroyed object from the list
-            active_windows.splice(i, 1);
-
-            // to do update loaded modules to not include the closed window
-        }
-    }
+    // If the extension is not specified, return the awnser for the module
+    if (extensionName == undefined) return [shouldModuleBeLoaded, globals.activeWindows.hasOwnProperty(moduleName)];
+    return [globals.selectedModules[moduleName].includes(extensionName), globals.activeWindows.hasOwnProperty(moduleName)];
 });

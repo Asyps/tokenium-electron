@@ -391,7 +391,3 @@ window.defineAPI("show command output", (args) => {
     else chat.playerChat.commandError(message);
 });
 */
-
-
-// Declare as loaded
-window.declareAsLoaded("chat", "commands");

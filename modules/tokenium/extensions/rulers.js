@@ -346,6 +346,3 @@ tokenium.dragHandler.moveVisualToken = () => {
         processArrow(timeout);
     }
 }
-
-// Declare as loaded
-window.declareAsLoaded("tokenium", "rulers");

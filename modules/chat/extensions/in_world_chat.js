@@ -233,5 +233,3 @@ inWorldChat.addCharacter("character2");
 inWorldChat.addCharacter("Fred");
 inWorldChat.addCharacter("Bertha");
 
-// Declare as loaded
-window.declareAsLoaded("chat", "in_world_chat");
