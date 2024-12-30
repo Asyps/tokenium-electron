@@ -18,9 +18,13 @@ app.on("window-all-closed", () => {
 
 // Class for handling modules
 class moduleInfo {
-    constructor(name, extensions) {
+    constructor(name, extensions=[]) {
         this.name = name;
-        this.extensions = extensions;
+        this.isLoaded = false;          // When a module is loaded, all of it's scripts (not counting extension scripts) have finished running
+
+        // Initialise the extensions
+        this.extensions = {};
+        for (i of extensions) this.extensions[i] = false;
     }
 };
 
@@ -67,18 +71,21 @@ app.whenReady().then(() => {
 
 // Mockup, will later get the info from server/files/whatever
 let games = {
-    bang: [
-        new moduleInfo("tokenium", [])
+    tokenium_test: [
+        new moduleInfo("tokenium", ["rulers"])
     ],
     desert: [
         new moduleInfo("tokenium", ["startup"]),
         new moduleInfo("chat", []),
         new moduleInfo("calculator", [])
     ],
-    uno: [
-        new moduleInfo("tokenium", []),
-        new moduleInfo("chat", [])
-    ]
+    chat_test: [
+        new moduleInfo("chat", ["in_world_chat", "commands"])
+    ],
+    full_test: [
+        new moduleInfo("chat", ["in_world_chat", "commands"]),
+        new moduleInfo("tokenium", ["rulers"])
+    ],
 };
 
 
@@ -438,8 +445,9 @@ ipcMain.handle("callFunction", async (ev, moduleName, functionName, args) => {
                 await active_windows[i].webContents.send("API-" + functionName, args);
             }
             catch {
-                throw new Error("Module's window was closed. Broadcasting function: " + functionName);
-                // I can probably ignore this error. If window was closed, do nothing. Perhaps I can remove the destroyed object from active_windows
+                // Remove the destroyed object from the list
+                active_windows.splice(i, 1);
+                // I can probably ignore this error. If window was closed, do nothing.
             }
         }
     }
@@ -496,8 +504,10 @@ ipcMain.handle("moduleLoadNotice", (ev, moduleName, extensionName) => {
             active_windows[i].webContents.send("LOAD-" + eventName);
         }
         catch {
-            throw new Error("Module's window was closed. Broadcasting load notice for " + eventName);
-            // I can probably ignore this error. If window was closed, do nothing. Perhaps I can remove the destroyed object from active_windows
+            // Remove the destroyed object from the list
+            active_windows.splice(i, 1);
+
+            // to do update loaded modules to not include the closed window
         }
     }
 });
