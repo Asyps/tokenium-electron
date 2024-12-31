@@ -64,16 +64,12 @@ contextBridge.exposeInMainWorld("onLoaded", async (moduleExtensionPair, callback
 
 // Function to call an API function from another module on startup without worries about load loader
 contextBridge.exposeInMainWorld("callFunctionOnLoaded", async (moduleExtensionPair, functionName, ...args) => {
-    console.log();
-    
     // Destructure moduleExtensionPair
     var [moduleName, extensionName] = processArgument(moduleExtensionPair);
 
     // Enquire about the module/extension pair
     let loadInfo = await ipcRenderer.invoke("moduleLoadEnquiry", moduleName, extensionName);    
     // This gets an array of two boolean values:     should the specified thing be loaded;   is the module loaded
-
-    console.log("callFunctionOnLoaded", functionName, loadInfo);
 
     // If the module/extension shouldn't be loaded, ignore the call
     if (loadInfo[0]) {

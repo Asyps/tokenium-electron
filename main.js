@@ -55,6 +55,9 @@ const globals = {
     // For these two dictionaries, each key:value pair encodes                    str moduleName : str[] extensionNameList
     availableModules: {},           // List of modules and extensions available
     selectedModules: {},            // List of modules and extensions selected to be loaded this game
+    
+    // Array of moduleNames that finished loading
+    loadedModules: [],              
 
     // A dictionary of all active window objects. Each key:value pair encodes        str moduleName : BrowserWindow browserWindow
     activeWindows: {}
@@ -63,7 +66,7 @@ const globals = {
 
 // Functions for reading/modifying file system contents
 const fileSystem = {
-    // Goes through the files and builds a list of all available modules, which is added into globals
+    // Goes through the files and builds a list of all available modules, which is put into globals.availableModules
     async buildAvailableModuleList() {
         var dirPath = path.join(__dirname, "modules");
 
@@ -369,14 +372,17 @@ app.whenReady().then(() => {
 
 // Load game procedure
 ipcMain.handle("loadGame", async (ev, gameName) => {
-    // Set variables
+    // Set the selected game into global variables
     globals.gameName = gameName;
     
     // Get the main display width and height
     const workAreaSize = screen.getPrimaryDisplay().workAreaSize;
     
-    // Obtain the window layout (first try getting the local layout, if it doesn't exist, get the default layout from server)
+    // Obtain the window layout
+    // First try getting the local layout from the window_layout.json file
     globals.windowLayout = await fileSystem.getWindowLayout();
+
+    // If the dict is empty (= file doesn't exist or it doesn't specify anything), get the default layout from server
     if ((Object.keys(globals.windowLayout)).length == 0) {
         // coming soon :tm:
         
@@ -408,7 +414,7 @@ ipcMain.handle("loadGame", async (ev, gameName) => {
     function loadScript(moduleWindow, moduleName, scriptName, isPostload=false) {
         // Create a promise that resolves once the script has finished loading
         return new Promise((resolve, reject) => {
-            // Create a handler for the message about the script loading or failing.
+            // Create a handler for the message about the script loading or failing
             ipcMain.handleOnce("LOAD-SCRIPT-" + moduleName + ":" + scriptName, (ev, didScriptLoad) => {
                 if (didScriptLoad) resolve();
                 reject("Script failed to load: " + scriptName);
@@ -441,7 +447,7 @@ ipcMain.handle("loadGame", async (ev, gameName) => {
         });
     }
 
-    // For every module needed to be loaded
+    // For every module needed to be loaded...
     for (let moduleName in globals.selectedModules) {
         // Get the module window information
         let windowInfo = globals.windowLayout[moduleName];   // The keys of globals.selectedModules represent module names
@@ -473,6 +479,9 @@ ipcMain.handle("loadGame", async (ev, gameName) => {
             }
         });
 
+        // Put the browser window into the active list
+        globals.activeWindows[moduleName] = moduleWindow;
+
         // Assign the html file
         moduleWindow.loadFile(path.join(__dirname, "modules", moduleName, "index.html"));
 
@@ -486,58 +495,57 @@ ipcMain.handle("loadGame", async (ev, gameName) => {
                 extensionLoadPromises.push(loadScript(moduleWindow, moduleName, extensionName));    
             }
 
-            Promise.all(extensionLoadPromises).then(
-                () => {
-                    // If all the extensions succesfully load, load the postload script
-                    return loadScript(moduleWindow, moduleName, "postload", true);
-                },
-                async (message) => { 
-                    // If any extension fails to load, return a rejected promise to the next .then()
-                    throw new Error(message) 
-                }
-            ).then(
-                () => {
-                    // If the postload script succesfully loads, declare the module as loaded
+            Promise.all(extensionLoadPromises)
+            .then(
+                // After all the extensions succesfully load, load the postload script and return the associated promise to the next .then
+                () => loadScript(moduleWindow, moduleName, "postload", true),
 
-                    // Broadcast the load event
-                    for (i in globals.activeWindows) {
-                        try {
-                            console.log("Sending load event " + moduleName + " to " + i)
-                            globals.activeWindows[i].webContents.send("LOAD-" + moduleName);
-                        }
-                        catch {
-                            // If the event sending fails, the window was probably closed
-                            // Remove the destroyed window object from the list of active windows
-                            console.log("failed sending load event " + moduleName + " to " + i)
-                            globals.activeWindows.splice(i, 1);
-                        }
-                    }
-                    
-                    // Put the browser window into the active list
-                    globals.activeWindows[moduleName] = moduleWindow;
-                },
+                // If one of the extensions failed to load, pass the error forward
+                (message) => new Promise((resolve, reject) => reject(message) )
+            )
+            .then(
+                // After the postload script successfully loads, pass the success forward
+                () => new Promise((resolve, reject) => resolve() ),
+
+                // If one of the extensions or the preload script failed to load...
                 (message) => {
-                    // This error handler can be triggered by one of the extensions failing, or by the postload script failing.
+                    // If one of the extensions failed to load, pass the error forward
+                    console.log(message);
+                    if (message != "Script failed to load: postload") return new Promise((resolve, reject) => reject(message) );
+                    console.log("It's postload so no error")
 
-                    // If one of the extensions fails to load, throw an error
-                    if (message != "Script failed to load: postload") throw new Error(message);
+                    // Otherwise it's the postload script which failed to load. In this case, return a success to the next .then()
+                    return new Promise((resolve, reject) => resolve() );
+                }
+            )
+            .then(
+                // If the previous .then returns a success, declare the module as loaded
+                () => {
+                    console.log("Declaring " + moduleName + " as loaded")
 
-                    // If the postload script fails, still declare the module as loaded
+                    // Add the module into the list of loaded modules
+                    globals.loadedModules.push(moduleName);
+
                     // Broadcast the load event
-                    for (i in globals.activeWindows) {
+                    for (windowName in globals.activeWindows) {
                         try {
-                            globals.activeWindows[i].webContents.send("LOAD-" + moduleName);
+                            globals.activeWindows[windowName].webContents.send("LOAD-" + moduleName);
+                            console.log("Sending loaded " + moduleName + " to " + windowName)
+                            
                         }
                         catch {
+                            console.log("Failed sending loaded " + moduleName + " to " + windowName)
                             // If the event sending fails, the window was probably closed
                             // Remove the destroyed window object from the list of active windows
-                            globals.activeWindows.splice(i, 1);
+                            delete globals.activeWindows[windowName];
+
+                            // Delete the module from loadedModules if it is there
+                            let index = globals.loadedModules.indexOf(windowName);
+                            if (index != -1) globals.loadedModules.splice(index, 1);
                         }
                     }
-                    
-                    // Put the browser window into the active list
-                    globals.activeWindows[moduleName] = moduleWindow;
                 }
+                // If the previous promise fails, let it be thrown as an error
             );
         });
     }
@@ -560,8 +568,12 @@ ipcMain.handle("callFunction", async (ev, moduleName, functionName, args) => {
             }
             catch {
                 // If the event sending fails, the window was probably closed
-                // Remove the destroyed window object from the list of active windows, remove the module entry from loaded modules
-                globals.activeWindows.splice(windowName, 1);
+                // Remove the destroyed window object from the list of active windows
+                delete globals.activeWindows[windowName];
+
+                // Delete the module from loadedModules if it is there
+                let index = globals.loadedModules.indexOf(windowName);
+                if (index != -1) globals.loadedModules.splice(index, 1);
             }
         }
     }
@@ -583,9 +595,16 @@ ipcMain.handle("callFunction", async (ev, moduleName, functionName, args) => {
                 return await reply;
             }
             catch {
-                throw new Error("Module is not loaded or it's window was closed. Called function: " + functionName);
-                // Ig I can just ignore this error, if the module is not loaded or it's window was closed, simply do nothing
-                // Perhaps I can remove the destroyed object from activeWindows if it was loaded before, and remove the event listener for the reply
+                // If the event sending fails, the window was probably closed
+                // Remove the destroyed window object from the list of active windows
+                delete globals.activeWindows[moduleName];
+
+                // Delete the module from loadedModules if it is there
+                let index = globals.loadedModules.indexOf(moduleName);
+                if (index != -1) globals.loadedModules.splice(index, 1);
+
+                // Remove the reply handler
+                ipcMain.removeHandler("API-reply-" + functionName);
             }
         }
     }
@@ -600,7 +619,7 @@ ipcMain.handle("moduleLoadEnquiry", (ev, moduleName, extensionName) => {
 
     if (!shouldModuleBeLoaded) return [false, false];       // If it shouldn't be loaded, the awnsers are known
     
-    // If the extension is not specified, return the awnser for the module
-    if (extensionName == undefined) return [shouldModuleBeLoaded, globals.activeWindows.hasOwnProperty(moduleName)];
-    return [globals.selectedModules[moduleName].includes(extensionName), globals.activeWindows.hasOwnProperty(moduleName)];
+    // If the extension is not specified, return the awnser for the module, otherwise return the awnser for an extension
+    if (extensionName == undefined) return [shouldModuleBeLoaded, globals.loadedModules.includes(moduleName)];
+    return [globals.selectedModules[moduleName].includes(extensionName), globals.loadedModules.includes(moduleName)];
 });
