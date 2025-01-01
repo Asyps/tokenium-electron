@@ -75,17 +75,14 @@ contextBridge.exposeInMainWorld("callFunctionOnLoaded", async (moduleExtensionPa
     if (loadInfo[0]) {
         if (loadInfo[1]) {
             // If the  module is loaded, call the function directly
-            console.log("direct call", functionName);
             return await ipcRenderer.invoke("callFunction", moduleName, functionName, args);
         }
         else {
             // If it is not, set an onload event to call it once it gets loaded
-
-            console.log("event handler", functionName);
-
             // Create a promise that sets the event to call the function, so that the reply can be awaited
             return await new Promise((resolve, reject) => { 
                 ipcRenderer.once("LOAD-" + moduleName, async (ev) => {
+                    console.log("Waiting for reply inside callFunctionOn loaded", moduleName, functionName);
                     resolve(await ipcRenderer.invoke("callFunction", moduleName, functionName, args));
                 });
             });

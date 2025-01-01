@@ -286,10 +286,16 @@ tokenium.dragHandler.beginDrag = (ev) => {
 }
 
 // Replace moveVisualToken with a function that takes into account the path traced by arrows
-tokenium.dragHandler.moveVisualToken = () => {
-    // Obtain the tokens
-    let dragToken = tokenium.dragHandler.dragObject;
-    let visualToken = document.getElementById(dragToken.getAttribute("visualToken"));
+tokenium.dragHandler.moveVisualToken = (tokenName, path, arrowColor="#42f551") => {
+    // Obtain the tokens - if the token name isn't specified, process the currently dragged token
+    if (tokenName == undefined) {
+        var dragToken = tokenium.dragHandler.dragObject;
+        var visualToken = document.getElementById(dragToken.getAttribute("visualToken"));
+    } else {
+        // If it is specified, process the specified token
+        var dragToken = document.getElementById(tokenName + " drag");
+        var visualToken = document.getElementById(tokenName + " visual");
+    }
 
     // Remove the event listener that starts dragging
     dragToken.removeEventListener("mousedown", tokenium.dragHandler.beginDrag);
@@ -298,11 +304,42 @@ tokenium.dragHandler.moveVisualToken = () => {
     let offsetX = visualToken.width / 2;
     let offsetY = visualToken.height / 2;
 
-    // End arrow measuring, obtain the path
-    let tokenPath = tokenium.ruler.endMeasuring(true);
+    // Obtain the path
+    if (path == undefined) {
+        // If a path wasn't specified, use the path from current measurement and end measuring
+        var tokenPath = tokenium.ruler.endMeasuring(true);
+    } else {
+        // Otherwise move the token on the specified path
+
+        // If the player was currently dragging this token, abort the dragging
+        if (tokenium.dragHandler.dragStatus && tokenium.dragHandler.dragObject.id == tokenName + " drag") tokenium.dragHandler.abortCurrentDrag();
+
+        // Move the drag token into the final position
+        let finalPosition = path[path.length - 1];
+        dragToken.style.left = px(finalPosition.x);
+        dragToken.style.top = px(finalPosition.y);
+
+        // Turn the list of coordinates into a list of arrows 
+        var tokenPath = [];
+
+        // Add the starting coordinates to the begining of the path
+        path.unshift({x: unpx(visualToken.style.left), y: unpx(visualToken.style.top)});
+
+        // Shift all coordinates by the appropriate offsets
+        for (coordinate of path) {
+            coordinate.x += offsetX;
+            coordinate.y += offsetY;
+        }
+
+        // Turn the list of coordinates into a list of arrows
+        for (let i = 1; i < path.length; i++) {
+            tokenPath.push(new Arrow(path[i-1], path[i], arrowColor));
+        }
+    }
 
     // Add the arrows of the path into a list of path arrows to be drawn
     tokenium.ruler.pathArrows = tokenium.ruler.pathArrows.concat(tokenPath);
+    tokenium.ruler.redraw();
 
     // A function to recursively process an arrow
     function processArrow(timeout=1000) {

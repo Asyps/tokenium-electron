@@ -510,9 +510,7 @@ ipcMain.handle("loadGame", async (ev, gameName) => {
                 // If one of the extensions or the preload script failed to load...
                 (message) => {
                     // If one of the extensions failed to load, pass the error forward
-                    console.log(message);
                     if (message != "Script failed to load: postload") return new Promise((resolve, reject) => reject(message) );
-                    console.log("It's postload so no error")
 
                     // Otherwise it's the postload script which failed to load. In this case, return a success to the next .then()
                     return new Promise((resolve, reject) => resolve() );
@@ -521,8 +519,6 @@ ipcMain.handle("loadGame", async (ev, gameName) => {
             .then(
                 // If the previous .then returns a success, declare the module as loaded
                 () => {
-                    console.log("Declaring " + moduleName + " as loaded")
-
                     // Add the module into the list of loaded modules
                     globals.loadedModules.push(moduleName);
 
@@ -530,11 +526,8 @@ ipcMain.handle("loadGame", async (ev, gameName) => {
                     for (windowName in globals.activeWindows) {
                         try {
                             globals.activeWindows[windowName].webContents.send("LOAD-" + moduleName);
-                            console.log("Sending loaded " + moduleName + " to " + windowName)
-                            
                         }
                         catch {
-                            console.log("Failed sending loaded " + moduleName + " to " + windowName)
                             // If the event sending fails, the window was probably closed
                             // Remove the destroyed window object from the list of active windows
                             delete globals.activeWindows[windowName];
@@ -616,7 +609,6 @@ ipcMain.handle("moduleLoadEnquiry", (ev, moduleName, extensionName) => {
 
     // Check if the module should be loaded
     let shouldModuleBeLoaded = globals.selectedModules.hasOwnProperty(moduleName);
-
     if (!shouldModuleBeLoaded) return [false, false];       // If it shouldn't be loaded, the awnsers are known
     
     // If the extension is not specified, return the awnser for the module, otherwise return the awnser for an extension

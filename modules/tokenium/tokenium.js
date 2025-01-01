@@ -151,6 +151,21 @@ const tokenium = {
             }
         },
 
+        abortCurrentDrag() {
+            if (tokenium.dragHandler.dragStatus) {
+                // Disable dragging
+                tokenium.dragHandler.dragStatus = false;
+
+                // Return the drag token to it's original position
+                // Get the visual token
+                let visualToken = document.getElementById(tokenium.dragHandler.dragObject.getAttribute("visualToken"));
+
+                // Move the current token to where visual token is
+                tokenium.dragHandler.dragObject.style.left = visualToken.style.left;
+                tokenium.dragHandler.dragObject.style.top = visualToken.style.top;
+            }
+        },
+
         moveVisualToken() {
             // Obtain the visual token
             let visualToken = document.getElementById(this.dragObject.getAttribute("visualToken"));
@@ -293,7 +308,6 @@ const tokenium = {
         }
     }
 }
-
 
 // Event for zooming in the tokenium
 tokenium.panZoomHandler.container.addEventListener("wheel", (ev) => {
