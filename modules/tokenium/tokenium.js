@@ -1,5 +1,5 @@
 // Register a description
-window.callFunctionOnLoaded(["chat", "commands"], "register module description", "tokenium", 
+window.callFunctionOnLoaded(["chat", "commands"], "registerDescription", "tokenium", 
     "This module is the key visual space of any game. The tokenium allows you to add a background, add tokens, and move them. Tokenium can be scrolled and panned. This module also includes a built in grid functionality."
 );
 
@@ -378,8 +378,8 @@ tokenium.panZoomHandler.container.addEventListener("mousemove", (ev) => {
 
 
 // API to resize tokenium
-window.defineAPI("tokeniumSize", (args) => {
-    [width, height] = args;
+window.defineAPI("tokeniumSize", (width, height) => {
+    //[width, height] = args;
 
     // If no new size is specified, the function call is an enquiry
     if (width == undefined || height == undefined) return [tokeniumData.width, tokeniumData.height];
@@ -393,11 +393,11 @@ window.defineAPI("tokeniumSize", (args) => {
 
     // Return the new size 
     return [tokeniumData.width, tokeniumData.height];
-});
+}, true);
 
 // API to change the size of a grid cell
-window.defineAPI("tokeniumGridSize", (args) => {
-    [newCellSize] = args;   // If newCellSize is null, the grid is turned off
+window.defineAPI("tokeniumGridSize", (newCellSize) => {
+    //[newCellSize] = args;   // If newCellSize is null, the grid is turned off
     
     // If no new grid size is specified, the function call is an enquiry
     if (newCellSize == undefined) return tokeniumData.gridSize;     
@@ -411,11 +411,11 @@ window.defineAPI("tokeniumGridSize", (args) => {
 
     // Return the grid size
     return tokeniumData.gridSize;
-});
+}, true);
 
 // API to add a token
-window.defineAPI("addToken", (args) => {
-    [id, x, y, width, height] = args;
+window.defineAPI("addToken", (id, x, y, width, height) => {
+    //[id, x, y, width, height] = args;
 
     tokeniumData.tokens.push({
         name: id,
@@ -429,7 +429,7 @@ window.defineAPI("addToken", (args) => {
 
 async function defineCommannds() {
     // Command for resizing the tokenium
-    await window.callFunctionOnLoaded(["chat", "commands"], "register command", "size", (async (flags, width, height, mapName) => {
+    await window.callFunctionOnLoaded(["chat", "commands"], "registerCommand", "size", (async (flags, width, height, mapName) => {
             // Parse the arguments
             if (width != undefined) width = parseInt(width);
             if (height != undefined) height = parseInt(height);    
@@ -449,7 +449,7 @@ async function defineCommannds() {
         "tokenium"
     );
     // Command for changing the grid size of tokenium
-    await window.callFunctionOnLoaded(["chat", "commands"], "register command", "grid", (async (flags, newGridSize, mapName) => {
+    await window.callFunctionOnLoaded(["chat", "commands"], "registerCommand", "grid", (async (flags, newGridSize, mapName) => {
             // Parse arguments
             if (newGridSize != undefined) newGridSize = parseInt(newGridSize);
             

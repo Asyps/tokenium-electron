@@ -1,5 +1,5 @@
 // Register a description
-window.callFunctionOnLoaded(["chat", "commands"], "register extension description", "tokenium", "rulers", 
+window.callFunctionOnLoaded(["chat", "commands"], "registerDescription", ["tokenium", "rulers"], 
     "This extension adds the functionality of rulers to tokenium. Rulers look like arrows. Rulers are a visual guide to token moving, and they can be used to measure distances."
 );
 

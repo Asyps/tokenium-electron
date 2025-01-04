@@ -22,10 +22,22 @@ contextBridge.exposeInMainWorld("callFunction", async (moduleName, functionName,
 });
 
 // Function to define API for other modules
-contextBridge.exposeInMainWorld("defineAPI", (functionName, callback) => {
-    ipcRenderer.on("API-" + functionName, async (ev, args) => {
-        await ipcRenderer.invoke("API-reply-" + functionName, callback(args));
-    });
+contextBridge.exposeInMainWorld("defineAPI", (functionName, callback, hasReturnValue=false) => {
+    if (hasReturnValue) {
+        // Set the handler for the function. Since it has a return value, invoke the reply event when the handler is called
+        ipcRenderer.on("API-" + functionName, async (ev, args) => {
+            await ipcRenderer.invoke("API-reply-" + functionName, await callback(...args));
+        });
+
+        // Register the function as a function with a return value
+        ipcRenderer.invoke("registerFunctionWithReplyValue", functionName);
+    }
+    else {
+        // Set the handler for the function
+        ipcRenderer.on("API-" + functionName, async (ev, args) => {
+            callback(...args);
+        });
+    }
 });
 
 
@@ -47,7 +59,7 @@ contextBridge.exposeInMainWorld("onLoaded", async (moduleExtensionPair, callback
     if (loadInfo[0]) {
         if (loadInfo[1]) {
             // If the  module is loaded, call the function directly
-            return await callback(args);
+            return await callback(...args);
         }
         else {
             // If it is not, set an onload event to call it once it gets loaded
@@ -55,7 +67,7 @@ contextBridge.exposeInMainWorld("onLoaded", async (moduleExtensionPair, callback
             // Create a promise that sets the event to call the function, so that the reply can be awaited
             return await new Promise((resolve, reject) => { 
                 ipcRenderer.once("LOAD-" + moduleName, async (ev) => {
-                    resolve(await callback(args));
+                    resolve(await callback(...args));
                 });
             });
         }
@@ -82,7 +94,6 @@ contextBridge.exposeInMainWorld("callFunctionOnLoaded", async (moduleExtensionPa
             // Create a promise that sets the event to call the function, so that the reply can be awaited
             return await new Promise((resolve, reject) => { 
                 ipcRenderer.once("LOAD-" + moduleName, async (ev) => {
-                    console.log("Waiting for reply inside callFunctionOn loaded", moduleName, functionName);
                     resolve(await ipcRenderer.invoke("callFunction", moduleName, functionName, args));
                 });
             });

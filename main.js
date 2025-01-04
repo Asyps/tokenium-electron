@@ -60,7 +60,10 @@ const globals = {
     loadedModules: [],              
 
     // A dictionary of all active window objects. Each key:value pair encodes        str moduleName : BrowserWindow browserWindow
-    activeWindows: {}
+    activeWindows: {},
+
+    // A list of function names with reply values
+    functionsWithReplyValue: []
 };
 
 
@@ -573,19 +576,26 @@ ipcMain.handle("callFunction", async (ev, moduleName, functionName, args) => {
     else {
         // If the module isn't supposed to be loaded, ignore the call
         if (globals.selectedModules.hasOwnProperty(moduleName)) {
+            console.log("Calling " + functionName + " in " + moduleName);
             try {
-                // Create a promise for the reply, inside the promise, set the reply handler
-                let reply = new Promise((resolve, reject) => {
-                    ipcMain.handleOnce("API-reply-" + functionName, (ev, reply) => {
-                        resolve(reply);
+                if (globals.functionsWithReplyValue.includes(functionName)) {
+                    // If the function has a return value...
+                    // Create a promise for the reply, inside the promise, set the reply handler
+                    let reply = new Promise((resolve, reject) => {
+                        ipcMain.handleOnce("API-reply-" + functionName, (ev, reply) => {
+                            resolve(reply);
+                        });
                     });
-                });
-                
-                // Send the event to the window
-                globals.activeWindows[moduleName].webContents.send("API-" + functionName, args);
-                
-                // Wait for the reply and return it
-                return await reply;
+                    
+                    // Call the function
+                    globals.activeWindows[moduleName].webContents.send("API-" + functionName, args);
+                    
+                    // Wait for the reply and return it
+                    return await reply;
+                } else {
+                    // If it doesn't have a return value, simply call it
+                    globals.activeWindows[moduleName].webContents.send("API-" + functionName, args);
+                }
             }
             catch {
                 // If the event sending fails, the window was probably closed
@@ -602,6 +612,9 @@ ipcMain.handle("callFunction", async (ev, moduleName, functionName, args) => {
         }
     }
 });
+
+// Handler requests to register a function with a return value
+ipcMain.handle("registerFunctionWithReplyValue", (ev, functionName) => globals.functionsWithReplyValue.push(functionName) );
 
 // Handles questions about loaded modules or extensions
 ipcMain.handle("moduleLoadEnquiry", (ev, moduleName, extensionName) => {

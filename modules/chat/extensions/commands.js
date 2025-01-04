@@ -349,26 +349,27 @@ const extensionDescriptionDatabase = {
 }
 
 // API for other modules to register their descriptions
-window.defineAPI("register module description", (args) => {
-    [moduleName, description] = args;
+window.defineAPI("registerDescription", (moduleExtensionPair, description) => {
+    // Process arguments - if moduleExtensionPair is a string, it specifies the moduleName - put it inside an array. Destructure moduleExtentionPair.
+    if (typeof moduleExtensionPair == "string") moduleExtensionPair = [moduleExtensionPair];
+    [moduleName, extensionName] = moduleExtensionPair;
 
-    moduleDescriptionDatabase[moduleName] = description;
-});
-window.defineAPI("register extension description", (args) => {
-    [moduleName, extensionName, description] = args;
+    // If the extension name is undefined, add the description to the module database
+    if (extensionName == undefined) moduleDescriptionDatabase[moduleName] = description;
+    // Otherwise add it to the extension database
+    else {
+        // If the object for the module hasn't been setup yet, create it
+        if (!extensionDescriptionDatabase.hasOwnProperty(moduleName)) {
+            extensionDescriptionDatabase[moduleName] = {};
+        }
 
-    // If the module object hasn't been setup yet, create it
-    if (!extensionDescriptionDatabase.hasOwnProperty(moduleName)) {
-        extensionDescriptionDatabase[moduleName] = {};
-    }
-
-    (extensionDescriptionDatabase[moduleName])[extensionName] = description;
+        // Add the description
+        (extensionDescriptionDatabase[moduleName])[extensionName] = description;
+    }  
 });
 
 // API for other modules to define their commands
-window.defineAPI("register command", (args) => {
-    [commandName, callbackString, syntaxInfo, description, groupName] = args;
-
+window.defineAPI("registerCommand", (commandName, callbackString, syntaxInfo, description, groupName) => {
     // If the group isn't specified, add the command as is
     if (groupName == undefined) commandDatabase[commandName] = new command(new Function("return " + callbackString)(), syntaxInfo, description);
     else {
@@ -383,7 +384,7 @@ window.defineAPI("register command", (args) => {
 
 /*
 // API for other modules to display command results
-window.defineAPI("show command output", (args) => {
+window.defineAPI("showCommandOutput", (args) => {
     [type, message] = args;
 
     if (type == "local") chat.playerChat.commandLocal(message);
