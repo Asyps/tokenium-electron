@@ -102,8 +102,9 @@ playerChat.commandError = (text) => {
 
 // A class for command entries
 class command {
-    constructor(callback, syntaxInfo, description) {
-        this.callback = callback;
+    constructor(moduleName, callString, syntaxInfo, description) {
+        this.moduleName = moduleName;
+        this.callString = callString;
         this.syntaxInfo = syntaxInfo;
         this.description = description;
     }
@@ -111,128 +112,20 @@ class command {
 
 // The database that stores all commands
 const commandDatabase = {
-    help: new command(
-        (flags, mainName, secondaryName) => {
-            if (mainName == undefined) {
-                // If no parameter is defined, display a manual to use the command systen and a list of available commands
-                playerChat.commandLocal("To get into command mode, press / when the text field is empty. The character / won't appear in the text area. To cancel command mode, press packspace when the input field is empty.");
-                playerChat.commandLocal("The blue box is a local command output that other players won't see and that will not persist between sessions.");
-                // Add the next line directly to chat to not synchronise it between players, because it serves as an example only
-                playerChat.internal.addChatComponent(new chatComponent("command public", "The green box is a public command output that other players will see and that persists between sessions."));
-                playerChat.commandError("The red box is a local command output that signifies an error.");
-                
-                // Generate the list of commands
-                let commandListStr = "List of available commands: ";
-                for (i in commandDatabase) {
-                    // If the command is a group, add " (group)" after the name
-                    commandListStr += i + (commandDatabase[i].hasOwnProperty("callback") ? "" : " (group)") + "; ";
-                }
-                commandListStr = commandListStr.slice(0, -2);        // Remove the last "; " characters from the string
-
-                // Show the list of commands
-                playerChat.commandLocal(commandListStr);
-            }
-            else if (secondaryName == undefined) {
-                // If only one parameter was specified...
-                if (commandDatabase.hasOwnProperty(mainName)) {
-                    if (commandDatabase[mainName].hasOwnProperty("callback")) {
-                        // If the specified entry exists and is a command, show it's syntax info and description
-                        playerChat.commandLocal(commandDatabase[mainName].syntaxInfo);
-                        playerChat.commandLocal(commandDatabase[mainName].description);
-                    } 
-                    else {
-                        // If it's a group, list the commands within
-                        // Generate the list of commands
-                        let commandListStr = "List of commands in the " + mainName + " group: ";
-                        for (i in commandDatabase[mainName]) {
-                            commandListStr += i + "; ";
-                        }
-                        commandListStr = commandListStr.slice(0, -2);        // Remove the last "; " characters from the string
-                        playerChat.commandLocal(commandListStr);
-                    }
-                }
-                else {
-                    playerChat.commandError("The specified command or group '" + mainName + "' does not exist.");
-                }
-            }
-            else {
-                if (commandDatabase.hasOwnProperty(mainName) && commandDatabase[mainName].hasOwnProperty(secondaryName)) {
-                    // If the command within the group exists, show it's syntax info and description
-                    playerChat.commandLocal(commandDatabase[mainName][secondaryName].syntaxInfo);
-                    playerChat.commandLocal(commandDatabase[mainName][secondaryName].description);
-                }
-                else {
-                    playerChat.commandError("The specified command '" + mainName + "' within the '" + secondaryName + "' group does not exist.");
-                }
-            }
-        },
-        "help [[groupName] commandName]",
-        "Shows the syntax and description of the specified command. If commandName is ommited, shows a manual to use the command system and list of all available commands instead.",
-    ),
-    moduleHelp: new command(
-        (flags, moduleName, extensionName) => {
-            if (moduleName == undefined) {
-                // If moduleName isn't provided
-                if (flags.includes("-l")) {
-                    // If the -l flag is set, display list of modules
-                    let moduleString = "Modules with available descriptions: ";
-                    for (i in moduleDescriptionDatabase) {
-                        moduleString += i + "; ";
-                    }
-                    moduleString = moduleString.slice(0, -2);        // Remove the last "; " characters from the string
-                    
-                    playerChat.commandLocal(moduleString);
-                }
-                else {
-                    // Otherwise display syntax info
-                    playerChat.commandLocal(commandDatabase.moduleHelp.syntaxInfo);
-                }
-            }
-            else if (extensionName == undefined) {
-                // If no extensionName is specified
-                if (flags.includes("-l")) {
-                    // If the -l flag is set, display list of extensions for the specified module
-                    if (extensionDescriptionDatabase.hasOwnProperty(moduleName)) {
-                        let extensionString = "Extensions for '" + moduleName + "' with available descriptions: ";
-                        for (i in extensionDescriptionDatabase[moduleName]) {
-                            extensionString += i + "; ";
-                        }
-                        extensionString = extensionString.slice(0, -2);        // Remove the last "; " characters from the string
-                        
-                        playerChat.commandLocal(extensionString);
-                    }
-                    else {
-                        // If the module name isn't included in the description database for extensions, show error
-                        playerChat.commandError("Module '" + moduleName + "' doesn't exist or it doesn't have any extensions that registered a description.");
-                    }
-                }
-                else {
-                    // Otherwise show the description of the module
-                    if (moduleDescriptionDatabase.hasOwnProperty(moduleName)) {
-                        // If the description is registered, show it
-                        playerChat.commandLocal(moduleDescriptionDatabase[moduleName]);
-                    }
-                    else {
-                        // If it isn't registered, show error
-                        playerChat.commandError("Module '" + moduleName + "' doesn't exist or it didn't register a description.");
-                    }
-                }
-            }
-            else {
-                // Show the description of the extension regardless of flags
-                if (extensionDescriptionDatabase.hasOwnProperty(moduleName) && extensionDescriptionDatabase[moduleName].hasOwnProperty(extensionName)) {
-                    // If the description is registered, show it
-                    playerChat.commandLocal(extensionDescriptionDatabase[moduleName][extensionName]);
-                }
-                else {
-                    // If it isn't, show error
-                    playerChat.commandError("Extension '" + extensionName + "' for module '" + moduleName + "' doesn't exist or it didn't register a description.");
-                }
-            }
-        },
-        "moduleHelp [moduleName [extensionName]] [-l]",
-        "Shows the description of the specified module. If extensionName is specified, the description of the extension is shown instead. If the -l flag is set, shows the list of modules (or extensions for the specified module) that have registered descriptions."
-    ),
+    "": {
+        "help": new command(
+            "chat",
+            "help",
+            "help [commandName [groupName] | groupName -g]",
+            "Shows the syntax and description of the specified command. If only groupName is provided (one argument with the -g flag), list of commands within the group is shown instead. If no arguments are specified, shows a manual to use the command system and list of all available commands and groups.",
+        ),
+        "moduleHelp": new command(
+            "chat",
+            "moduleHelp",
+            "moduleHelp [moduleName [extensionName]] [-l]",
+            "Shows the description of the specified module. If extensionName is specified, the description of the extension is shown instead. If the -l flag is set, shows the list of modules (or extensions for the specified module) that have registered descriptions."
+        ),
+    }
 }
 
 
@@ -278,19 +171,27 @@ playerChat.confirm = () => {
                 commandArguments.splice(commandArguments.indexOf(i), 1);
             }
             
-            // If the entry exists, check if it's a command or a group 
-            if (commandDatabase.hasOwnProperty(commandName)) {
-                // If it's a command, run it, else go one in
-                if (commandDatabase[commandName].hasOwnProperty("callback")) commandDatabase[commandName].callback(flags=flags, ...commandArguments);
-                else {
-                    subCommandName = commandArguments.shift();
-                    commandDatabase[commandName][subCommandName].callback(flags=flags, ...commandArguments)
-                }
+            // First check if the entry is a groupless command
+            if (commandDatabase[""].hasOwnProperty(commandName)) {
+                // If it's a groupless command, run it
+                window.callFunction(commandDatabase[""][commandName].moduleName, "command-" + commandDatabase[""][commandName].callString, flags, ...commandArguments);
             }
             else {
-                playerChat.commandError("This command does not exist. To see the list of available commands, enter the help command");
+                // If not, it may be a grouped command. Update variables
+                let groupName = commandName;
+                commandName = commandArguments.shift();
+
+                // Check if the command is a grouped command
+                if (commandDatabase.hasOwnProperty(groupName) && commandDatabase[groupName].hasOwnProperty(commandName)) {
+                    // If it is a grouped command, run it
+                    window.callFunction(commandDatabase[groupName][commandName].moduleName, "command-" + commandDatabase[groupName][commandName].callString, flags, ...commandArguments);
+                } else {
+                    // Otherwise display error
+                    playerChat.commandError("This command does not exist. To see the list of available commands, enter the help command.");
+                }
             }
 
+            // Turn off command mode and save the entered command
             commandModeOff();
             playerChat.lastCommandText = playerChat.internal.textInput.value;
         }
@@ -369,26 +270,178 @@ window.defineAPI("registerDescription", (moduleExtensionPair, description) => {
 });
 
 // API for other modules to define their commands
-window.defineAPI("registerCommand", (commandName, callbackString, syntaxInfo, description, groupName) => {
-    // If the group isn't specified, add the command as is
-    if (groupName == undefined) commandDatabase[commandName] = new command(new Function("return " + callbackString)(), syntaxInfo, description);
-    else {
-        // If the group is specified but doesn't exist yet, create it
-        if (commandDatabase[groupName] == undefined) commandDatabase[groupName] = {}
+window.defineAPI("registerCommand", function (groupName="", commandName, syntaxInfo, description) {   // Groupless commands have an empty string as groupName and as the key in commandDatabase
+    // If the group is specified but doesn't exist yet, create it
+    if (commandDatabase[groupName] == undefined) commandDatabase[groupName] = {}
 
-        // Add the command to the group within the database
-        commandDatabase[groupName][commandName] = new command(new Function("return " + callbackString)(), syntaxInfo, description);
-    } 
-});
+    // Add the command to the group within the database (if the command already exists, it gets replaced)
+    commandDatabase[groupName][commandName] = new command(arguments[4], groupName + ((groupName == "") ? "" : "-") + commandName, syntaxInfo, description);
+}, false, true);
 
-
-/*
 // API for other modules to display command results
-window.defineAPI("showCommandOutput", (args) => {
-    [type, message] = args;
-
-    if (type == "local") chat.playerChat.commandLocal(message);
-    else if (type == "public") chat.playerChat.commandPublic(message);
-    else chat.playerChat.commandError(message);
+window.defineAPI("showCommandOutput", (type, message) => {
+    if (type == "local") playerChat.commandLocal(message);
+    else if (type == "public") playerChat.commandPublic(message);
+    else playerChat.commandError(message);
 });
-*/
+
+// Define commands in API
+window.defineAPI("command-help", (flags, arg1, arg2) => {
+    // Process arguments
+    if (arg2 == undefined) {
+        // If only one argument is specified...
+        if (flags.includes("-g")) {
+            // And the group flag is set, it specifies the group name
+            var groupName = arg1;
+        }
+        else {
+            // Otherwise it is the command name
+            var commandName = arg1;
+        }
+    }
+    else {
+        // If both are specified, they are the group name and command name
+        var groupName = arg1;
+        var commandName = arg2;
+    }
+
+    if (commandName == undefined && groupName == undefined) {
+
+        // If no parameter is defined, display a manual to use the command system and a list of available commands and groups
+        playerChat.commandLocal("To get into command mode, press / when the text field is empty. The character / won't appear in the text area. To cancel command mode, press packspace when the input field is empty.");
+        playerChat.commandLocal("The blue box is a local command output that other players won't see and that will not persist between sessions.");
+        // Add the next line directly to chat to not synchronise it between players, because it serves as an example only
+        playerChat.internal.addChatComponent(new chatComponent("command public", "The green box is a public command output that other players will see and that persists between sessions."));
+        playerChat.commandError("The red box is a local command output that signifies an error.");
+        
+
+        // Generate the list of commands
+        let commandListStr = "List of available commands: ";
+        for (i in commandDatabase[""]) {
+            commandListStr += i + "; ";
+        }
+        commandListStr = commandListStr.slice(0, -2);        // Remove the last "; " characters from the string
+
+        // Show the list of commands
+        playerChat.commandLocal(commandListStr);
+
+
+        // Generate the list of command groups
+        commandListStr = "";
+        for (i in commandDatabase) {
+            commandListStr += i + "; ";                      // The groupless commands will result in an extra "; " added to the beginning of the string since i="" for that case
+        }
+        commandListStr = commandListStr.slice(2, -2);        // Remove the first and last "; " characters from the string
+
+        // Show the list of command groups
+        playerChat.commandLocal("List of available command groups: " + commandListStr);
+    }
+    else if (groupName == undefined) {
+        // If only the command name was specified...
+        if (commandDatabase[""].hasOwnProperty(commandName)) {
+            // If the specified command exists, show it's syntax info and description
+            playerChat.commandLocal(commandDatabase[""][commandName].syntaxInfo);
+            playerChat.commandLocal(commandDatabase[""][commandName].description);
+            } 
+        else {
+            // Otherwise show error
+            playerChat.commandError("The specified command '" + commandName + "' doesn't exist.");
+        }
+    }
+    else {
+        // The group is defined. If it exists...
+        if (commandDatabase.hasOwnProperty(groupName)) {
+            
+            if (commandName == undefined) {
+                // If the commandName isn't specified, show list of commands
+
+                // Generate the list of commands
+                let commandListStr = "List of available commands in group '" + groupName + "': ";
+                for (i in commandDatabase[groupName]) {
+                    commandListStr += i + "; ";
+                }
+                commandListStr = commandListStr.slice(0, -2);        // Remove the last "; " characters from the string
+
+                // Show the list of commands
+                playerChat.commandLocal(commandListStr);
+            }
+            else {
+                // If the commandName is specified...
+                if (commandDatabase[groupName].hasOwnProperty(commandName)) {
+                    // If the specified command exists, show it's syntax info and description
+                    playerChat.commandLocal(commandDatabase[groupName][commandName].syntaxInfo);
+                    playerChat.commandLocal(commandDatabase[groupName][commandName].description);
+                    } 
+                else {
+                    // Otherwise show error
+                    playerChat.commandError("The specified command '" + commandName + "' within group '" + groupName + "' doesn't exist.");
+                }
+            }
+        }
+        else {
+            // If the group doesn't exist, show error
+            playerChat.commandError("The specified group '" + groupName + "' doesn't exist.");
+        }
+    }
+});
+
+window.defineAPI("command-moduleHelp", (flags, moduleName, extensionName) => {
+    if (moduleName == undefined) {
+        // If moduleName isn't provided
+        if (flags.includes("-l")) {
+            // If the -l flag is set, display list of modules
+            let moduleString = "Modules with available descriptions: ";
+            for (i in moduleDescriptionDatabase) {
+                moduleString += i + "; ";
+            }
+            moduleString = moduleString.slice(0, -2);        // Remove the last "; " characters from the string
+            
+            playerChat.commandLocal(moduleString);
+        }
+        else {
+            // Otherwise display syntax info
+            playerChat.commandLocal(commandDatabase.moduleHelp.syntaxInfo);
+        }
+    }
+    else if (extensionName == undefined) {
+        // If no extensionName is specified
+        if (flags.includes("-l")) {
+            // If the -l flag is set, display list of extensions for the specified module
+            if (extensionDescriptionDatabase.hasOwnProperty(moduleName)) {
+                let extensionString = "Extensions for '" + moduleName + "' with available descriptions: ";
+                for (i in extensionDescriptionDatabase[moduleName]) {
+                    extensionString += i + "; ";
+                }
+                extensionString = extensionString.slice(0, -2);        // Remove the last "; " characters from the string
+                
+                playerChat.commandLocal(extensionString);
+            }
+            else {
+                // If the module name isn't included in the description database for extensions, show error
+                playerChat.commandError("Module '" + moduleName + "' doesn't exist or it doesn't have any extensions that registered a description.");
+            }
+        }
+        else {
+            // Otherwise show the description of the module
+            if (moduleDescriptionDatabase.hasOwnProperty(moduleName)) {
+                // If the description is registered, show it
+                playerChat.commandLocal(moduleDescriptionDatabase[moduleName]);
+            }
+            else {
+                // If it isn't registered, show error
+                playerChat.commandError("Module '" + moduleName + "' doesn't exist or it didn't register a description.");
+            }
+        }
+    }
+    else {
+        // If both moduleName and extensionName are defined, show the description of the extension regardless of flags
+        if (extensionDescriptionDatabase.hasOwnProperty(moduleName) && extensionDescriptionDatabase[moduleName].hasOwnProperty(extensionName)) {
+            // If the description is registered, show it
+            playerChat.commandLocal(extensionDescriptionDatabase[moduleName][extensionName]);
+        }
+        else {
+            // If it isn't, show error
+            playerChat.commandError("Extension '" + extensionName + "' for module '" + moduleName + "' doesn't exist or it didn't register a description.");
+        }
+    }
+});

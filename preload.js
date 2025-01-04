@@ -1,5 +1,8 @@
 const { ipcRenderer, contextBridge } = require("electron");
 
+// Invoke the request to obtain module name
+(async () => window.moduleName = await ipcRenderer.invoke("obtainName"))();
+
 // A helper function for resolving the moduleExtensionPair arguments
 function processArgument(moduleExtensionPair) {
     // If moduleExtensionPair is a string, put it into an array so that the destructuring works
@@ -14,32 +17,30 @@ contextBridge.exposeInMainWorld("announceScriptLoad", (moduleName, scriptName, i
     ipcRenderer.invoke("LOAD-SCRIPT-" + moduleName + ":" + scriptName, isSuccess);
 });
 
-
 // API system
 // Function to call an API function from another module
 contextBridge.exposeInMainWorld("callFunction", async (moduleName, functionName, ...args) => {
-    return await ipcRenderer.invoke("callFunction", moduleName, functionName, args);
+    return await ipcRenderer.invoke("callFunction", moduleName, functionName, args, window.moduleName);
 });
 
 // Function to define API for other modules
-contextBridge.exposeInMainWorld("defineAPI", (functionName, callback, hasReturnValue=false) => {
+contextBridge.exposeInMainWorld("defineAPI", (functionName, callback, hasReturnValue=false, wantsToKnowCaller=false) => {
     if (hasReturnValue) {
         // Set the handler for the function. Since it has a return value, invoke the reply event when the handler is called
-        ipcRenderer.on("API-" + functionName, async (ev, args) => {
-            await ipcRenderer.invoke("API-reply-" + functionName, await callback(...args));
+        ipcRenderer.on("API-" + functionName, async (ev, args, callerName) => {
+            await ipcRenderer.invoke("API-reply-" + window.moduleName + "-" + functionName, await callback(...args, (wantsToKnowCaller) ? callerName : undefined));
         });
 
         // Register the function as a function with a return value
-        ipcRenderer.invoke("registerFunctionWithReplyValue", functionName);
+        ipcRenderer.invoke("registerFunctionWithReplyValue", window.moduleName, functionName);
     }
     else {
         // Set the handler for the function
-        ipcRenderer.on("API-" + functionName, async (ev, args) => {
-            callback(...args);
+        ipcRenderer.on("API-" + functionName, (ev, args, callerName) => {
+            callback(...args, (wantsToKnowCaller) ? callerName : undefined);
         });
     }
 });
-
 
 // Function to enquire if a module is loaded (needs an await before it when used)
 contextBridge.exposeInMainWorld("loadEnquiry", async (moduleName, extensionName) => {
@@ -87,14 +88,14 @@ contextBridge.exposeInMainWorld("callFunctionOnLoaded", async (moduleExtensionPa
     if (loadInfo[0]) {
         if (loadInfo[1]) {
             // If the  module is loaded, call the function directly
-            return await ipcRenderer.invoke("callFunction", moduleName, functionName, args);
+            return await ipcRenderer.invoke("callFunction", moduleName, functionName, args, window.moduleName);
         }
         else {
             // If it is not, set an onload event to call it once it gets loaded
             // Create a promise that sets the event to call the function, so that the reply can be awaited
             return await new Promise((resolve, reject) => { 
                 ipcRenderer.once("LOAD-" + moduleName, async (ev) => {
-                    resolve(await ipcRenderer.invoke("callFunction", moduleName, functionName, args));
+                    resolve(await ipcRenderer.invoke("callFunction", moduleName, functionName, args, window.moduleName));
                 });
             });
         }

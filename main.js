@@ -377,6 +377,7 @@ app.whenReady().then(() => {
 ipcMain.handle("loadGame", async (ev, gameName) => {
     // Set the selected game into global variables
     globals.gameName = gameName;
+
     
     // Get the main display width and height
     const workAreaSize = screen.getPrimaryDisplay().workAreaSize;
@@ -450,6 +451,12 @@ ipcMain.handle("loadGame", async (ev, gameName) => {
         });
     }
 
+    // Module name distribution system
+    let moduleNameFIFO = [];
+    // Create an event handler for a request to obtain the module name - will immediately be triggered by the preload script
+    // Modules will call this event in the order they are declared
+    ipcMain.handle("obtainName", () => moduleNameFIFO.shift());
+
     // For every module needed to be loaded...
     for (let moduleName in globals.selectedModules) {
         // Get the module window information
@@ -469,6 +476,8 @@ ipcMain.handle("loadGame", async (ev, gameName) => {
             var y = 50;
         }
 
+        // Put the module name in moduleNameFIFO
+        moduleNameFIFO.push(moduleName);
 
         // Create the module window
         let moduleWindow = new BrowserWindow({
@@ -481,7 +490,7 @@ ipcMain.handle("loadGame", async (ev, gameName) => {
                 preload: path.join(__dirname, "preload.js")
             }
         });
-
+        
         // Put the browser window into the active list
         globals.activeWindows[moduleName] = moduleWindow;
 
@@ -550,17 +559,17 @@ ipcMain.handle("loadGame", async (ev, gameName) => {
     globals.mainMenu.close();
 }); 
 
-
 // Communication system
 
 // Handles requests to call API functions
-ipcMain.handle("callFunction", async (ev, moduleName, functionName, args) => {
+ipcMain.handle("callFunction", async (ev, moduleName, functionName, args, callerName) => {
     // Empty module name => broadcast
     if (moduleName == "") {
         for (let windowName in globals.activeWindows) {
             try {
                 // Send the event to all windows, no reply is expected
-                await globals.activeWindows[windowName].webContents.send("API-" + functionName, args);
+                await globals.activeWindows[windowName].webContents.send("API-" + functionName, args, callerName);
+                // Last argument will always be the name of module that called the function
             }
             catch {
                 // If the event sending fails, the window was probably closed
@@ -571,30 +580,32 @@ ipcMain.handle("callFunction", async (ev, moduleName, functionName, args) => {
                 let index = globals.loadedModules.indexOf(windowName);
                 if (index != -1) globals.loadedModules.splice(index, 1);
             }
+            
         }
     }
     else {
         // If the module isn't supposed to be loaded, ignore the call
         if (globals.selectedModules.hasOwnProperty(moduleName)) {
-            console.log("Calling " + functionName + " in " + moduleName);
             try {
-                if (globals.functionsWithReplyValue.includes(functionName)) {
+                if (globals.functionsWithReplyValue.includes(moduleName + "-" + functionName)) {
                     // If the function has a return value...
                     // Create a promise for the reply, inside the promise, set the reply handler
                     let reply = new Promise((resolve, reject) => {
-                        ipcMain.handleOnce("API-reply-" + functionName, (ev, reply) => {
+                        ipcMain.handleOnce("API-reply-" + moduleName + "-" + functionName, (ev, reply) => {
                             resolve(reply);
                         });
                     });
                     
                     // Call the function
-                    globals.activeWindows[moduleName].webContents.send("API-" + functionName, args);
+                    globals.activeWindows[moduleName].webContents.send("API-" + functionName, args, callerName);
+                    // Last argument will always be the name of module that called the function
                     
                     // Wait for the reply and return it
                     return await reply;
                 } else {
                     // If it doesn't have a return value, simply call it
-                    globals.activeWindows[moduleName].webContents.send("API-" + functionName, args);
+                    globals.activeWindows[moduleName].webContents.send("API-" + functionName, args, callerName);
+                    // Last argument will always be the name of module that called the function
                 }
             }
             catch {
@@ -607,14 +618,14 @@ ipcMain.handle("callFunction", async (ev, moduleName, functionName, args) => {
                 if (index != -1) globals.loadedModules.splice(index, 1);
 
                 // Remove the reply handler
-                ipcMain.removeHandler("API-reply-" + functionName);
+                ipcMain.removeHandler("API-reply-" + moduleName + "-" + functionName);
             }
         }
     }
 });
 
 // Handler requests to register a function with a return value
-ipcMain.handle("registerFunctionWithReplyValue", (ev, functionName) => globals.functionsWithReplyValue.push(functionName) );
+ipcMain.handle("registerFunctionWithReplyValue", (ev, moduleName, functionName) => globals.functionsWithReplyValue.push(moduleName + "-" + functionName) );
 
 // Handles questions about loaded modules or extensions
 ipcMain.handle("moduleLoadEnquiry", (ev, moduleName, extensionName) => {

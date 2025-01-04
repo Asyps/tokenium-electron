@@ -379,8 +379,6 @@ tokenium.panZoomHandler.container.addEventListener("mousemove", (ev) => {
 
 // API to resize tokenium
 window.defineAPI("tokeniumSize", (width, height) => {
-    //[width, height] = args;
-
     // If no new size is specified, the function call is an enquiry
     if (width == undefined || height == undefined) return [tokeniumData.width, tokeniumData.height];
 
@@ -396,9 +394,7 @@ window.defineAPI("tokeniumSize", (width, height) => {
 }, true);
 
 // API to change the size of a grid cell
-window.defineAPI("tokeniumGridSize", (newCellSize) => {
-    //[newCellSize] = args;   // If newCellSize is null, the grid is turned off
-    
+window.defineAPI("tokeniumGridSize", (newCellSize) => { 
     // If no new grid size is specified, the function call is an enquiry
     if (newCellSize == undefined) return tokeniumData.gridSize;     
     
@@ -415,8 +411,6 @@ window.defineAPI("tokeniumGridSize", (newCellSize) => {
 
 // API to add a token
 window.defineAPI("addToken", (id, x, y, width, height) => {
-    //[id, x, y, width, height] = args;
-
     tokeniumData.tokens.push({
         name: id,
         position: { x: x, y: y },
@@ -429,43 +423,50 @@ window.defineAPI("addToken", (id, x, y, width, height) => {
 
 async function defineCommannds() {
     // Command for resizing the tokenium
-    await window.callFunctionOnLoaded(["chat", "commands"], "registerCommand", "size", (async (flags, width, height, mapName) => {
-            // Parse the arguments
-            if (width != undefined) width = parseInt(width);
-            if (height != undefined) height = parseInt(height);    
+    // Define the handler
+    window.defineAPI("command-tokenium-size", async (flags, width, height, mapName) => {
+        // Parse the arguments
+        if (width != undefined) width = parseInt(width);
+        if (height != undefined) height = parseInt(height);    
 
-            if (mapName == undefined) {
-                // If no mapName is specified, resize if size specified, and return current/new size
-                let size = await window.callFunction("tokenium", "tokeniumSize", width, height);
-                
-                playerChat.commandLocal("Tokenium size " + ((width == undefined || height == undefined) ? "is " : "changed to ") + size[0] + "px × " + size[1] + "px.");
-            }
-            else {
-                // Coming soon
-            }
-        }).toString(),
+        if (mapName == undefined) {
+            // If no mapName is specified, resize if size specified, and return current/new size
+            let size = await window.callFunction("tokenium", "tokeniumSize", width, height);
+            
+            window.callFunction("chat", "showCommandOutput", "local", "Tokenium size " + ((width == undefined || height == undefined) ? "is " : "changed to ") + size[0] + "px × " + size[1] + "px.");
+        }
+        else {
+            // Coming soon
+        }
+    });
+    // Register the command
+    await window.callFunctionOnLoaded(["chat", "commands"], "registerCommand",
+        "tokenium", "size",
         "tokenium size [width height [mapName]]",
         "Returns the size of the current tokenium map. If size is specified, it also resizes the current tokenium map. If mapName is specified, the action is done for the specific map instead.",
-        "tokenium"
     );
-    // Command for changing the grid size of tokenium
-    await window.callFunctionOnLoaded(["chat", "commands"], "registerCommand", "grid", (async (flags, newGridSize, mapName) => {
-            // Parse arguments
-            if (newGridSize != undefined) newGridSize = parseInt(newGridSize);
+    
+    // Command for changing the tokenium grid size
+    // Define the handler
+    window.defineAPI("command-tokenium-grid", async (flags, newGridSize, mapName) => {
+        // Parse arguments
+        if (newGridSize != undefined) newGridSize = parseInt(newGridSize);
+        
+        if (mapName == undefined) {
+            // If no mapName is specified, change grid size if it's specified, and return current/new grid size        
+            let size = await window.callFunction("tokenium", "tokeniumGridSize", newGridSize);
             
-            if (mapName == undefined) {
-                // If no mapName is specified, change grid size if it's specified, and return current/new grid size        
-                let size = await window.callFunction("tokenium", "tokeniumGridSize", newGridSize);
-                
-                playerChat.commandLocal("Tokenium grid size " + ((newGridSize == undefined) ? "is " : "changed to ") + size + "px.");
-            }
-            else {
-                // Coming soon
-            }
-        }).toString(),
+            window.callFunction("chat", "showCommandOutput", "local", "Tokenium grid size " + ((newGridSize == undefined) ? "is " : "changed to ") + size + "px.");
+        }
+        else {
+            // Coming soon
+        }
+    });
+    // Register the command
+    await window.callFunctionOnLoaded(["chat", "commands"], "registerCommand",
+        "tokenium", "grid",
         "tokenium grid [newGridSize [mapName]]",
         "Returns the grid size of the current tokenium map. If newGridSize is specified, it also resizes the current tokenium grid. If mapName is specified, the action is done for the specific map instead.",
-        "tokenium"
     );
 }
 
