@@ -1,10 +1,50 @@
 // Debug
 process.traceProcessWarnings = true;
 
-// Imports
+// Imports commonjs
+/*
 const { app, BrowserWindow, ipcMain, screen } = require('electron');
 const fs = require("fs/promises");
 const path = require("path");
+*/
+
+// Imports
+
+import { app, BrowserWindow, ipcMain, screen } from 'electron';
+import fs from "fs/promises";
+import path from "path";
+
+
+// fireglue import test
+import * as binary from "./fireglue/binary.mjs"
+import * as errors from "./fireglue/errors.mjs"
+import * as kvstore from "./fireglue/kvstore.mjs"
+import * as socket from "./fireglue/socket.mjs"
+import * as utils from "./fireglue/utils.mjs"
+
+async function fireglueTest() {
+    let ctx = new socket.SocketCtx();
+    ctx.addEventListener("message", (ev) => {
+        console.log("message", ev.identifier, new Uint8Array(ev.payload));
+    });
+    ctx.addEventListener("userjoin", (ev) => {
+        console.log("join", ev.player.nickname, ev.player.token.bigint);
+    });
+    ctx.addEventListener("userleave", (ev) => {
+        console.log("leave", ev.token.bigint);
+    });
+    ctx.addEventListener("userupdate", (ev) => {
+        console.log("user update", ev.user);
+    });
+    ctx.addEventListener("blockupdate", (ev) => {
+        console.log("block update", ev.block);
+    });
+    console.log("Connecting to server...")
+    //await ctx.connect("localhost:8989", 'user-' + String(Math.trunc(Math.random() * 1000)), '', true);
+    //console.log("Connected as", ctx.__user._nickname, ctx.__user._admin ? "admin" : "user", "access", Array.from(ctx.__user._blockAccess))
+}
+fireglueTest();
+
 
 // Close the application when all windows are closed
 app.on("window-all-closed", () => {
@@ -52,6 +92,9 @@ let selectedModuleList = {
 
 // A place to put the main process global variables
 const globals = {
+    // Current working difrectory
+    CWD: path.resolve(),
+
     // For these two dictionaries, each key:value pair encodes                    str moduleName : str[] extensionNameList
     availableModules: {},           // List of modules and extensions available
     selectedModules: {},            // List of modules and extensions selected to be loaded this game
@@ -66,12 +109,13 @@ const globals = {
     functionsWithReplyValue: []
 };
 
+console.log(globals.CWD);
 
 // Functions for reading/modifying file system contents
 const fileSystem = {
     // Goes through the files and builds a list of all available modules, which is put into globals.availableModules
     async buildAvailableModuleList() {
-        var dirPath = path.join(__dirname, "modules");
+        var dirPath = path.join(globals.CWD, "modules");
 
         // Open the modules directory
         try {
@@ -104,7 +148,7 @@ const fileSystem = {
                 if (hasExtensions) {
                     // If the module has extensions, cycle through them
                     for await (const extensionDirent of extensionsDir) {
-                        extensionName = extensionDirent.name;
+                        let extensionName = extensionDirent.name;
 
                         // Check if entry is a .js file, else throw error
                         if (extensionDirent.isFile() && (path.extname(extensionName) == ".js")) {
@@ -129,7 +173,7 @@ const fileSystem = {
 
     // Goes through the files and builds a list of existing games, which is returned
     async getExistingGames() {
-        var dirPath = path.join(__dirname, "games");
+        var dirPath = path.join(globals.CWD, "games");
         var gameList = [];
 
         // Open the games directory
@@ -157,7 +201,7 @@ const fileSystem = {
 
     // Goes through the files and builds a list of available profile pictures, which is returned
     async getAvailableProfilePictures() {
-        var dirPath = path.join(__dirname, "profile_pics");
+        var dirPath = path.join(globals.CWD, "profile_pics");
         let profilePictureList = [];
 
         // Open the profile picture directory
@@ -189,7 +233,7 @@ const fileSystem = {
         if (!globals.gameName) throw new Error("Tried to run a function dependent on the game name while no game was selected.");
         
         var assetList = [];
-        var rootPath = path.join(__dirname, "games", globals.gameName, "assets");
+        var rootPath = path.join(globals.CWD, "games", globals.gameName, "assets");
 
         // Try opening the profile picture directory
         try {
@@ -229,14 +273,14 @@ const fileSystem = {
 
     // Adds a profile picture to the profile_pics folder
     async addProfilePicture(playerName, data) {
-        let pfpPath = path.join(__dirname, "profile_pics", playerName + ".png");
+        let pfpPath = path.join(globals.CWD, "profile_pics", playerName + ".png");
 
         try {
             // Try writing the file
             await fs.writeFile(pfpPath, data);
         } catch {
             // If the profile_pics dir doesn't exist, create it and write again
-            await fs.mkdir(path.join(__dirname, "profile_pics"));
+            await fs.mkdir(path.join(globals.CWD, "profile_pics"));
             await fs.writeFile(pfpPath, data);
         }
     },
@@ -245,7 +289,7 @@ const fileSystem = {
     async addAsset(localPath, data) {
         if (!globals.gameName) throw new Error("Tried to run a function dependent on the game name while no game was selected.");
 
-        var assetPath = path.join(__dirname, "games", globals.gameName, "assets", localPath);
+        var assetPath = path.join(globals.CWD, "games", globals.gameName, "assets", localPath);
         
         try {
             // Try to make the file
@@ -262,7 +306,7 @@ const fileSystem = {
     async removeAsset(localPath) {
         if (!window.gameName) throw new Error("Tried to run a function dependent on the game name while no game was selected.");
 
-        let assetPath = path.join(__dirname, "games", window.gameName, "assets", localPath);
+        let assetPath = path.join(globals.CWD, "games", window.gameName, "assets", localPath);
         
         // Returns the path to be deleted
         async function checkParentFolder(filePath) {
@@ -298,7 +342,7 @@ const fileSystem = {
     async getWindowLayout() {
         if (!globals.gameName) throw new Error("Tried to run a function dependent on the game name while no game was selected.")
 
-        let filePath = path.join(__dirname, "games", globals.gameName, "window_layout.json");
+        let filePath = path.join(globals.CWD, "games", globals.gameName, "window_layout.json");
 
         try {
             // Read, parse and return the data
@@ -316,7 +360,7 @@ const fileSystem = {
     async saveWindowLayout() {
         if (!globals.gameName) throw new Error("Tried to run a function dependent on the game name while no game was selected.");
 
-        let filePath = path.join(__dirname, "games", globals.gameName, "window_layout.json");
+        let filePath = path.join(globals.CWD, "games", globals.gameName, "window_layout.json");
 
         await fs.writeFile(filePath, JSON.stringify(globals.windowLayout, null, 4), {encoding: "utf8"});
     }
@@ -343,12 +387,12 @@ app.whenReady().then(() => {
         x: 25,
         y: 50,
         webPreferences: {
-            preload: path.join(__dirname, "main_menu", "preload.js")
+            preload: path.join(globals.CWD, "main_menu", "preload.js")
         }
     });
 
     // Load the .js
-    globals.mainMenu.loadFile(path.join(__dirname, "main_menu", "index.html"));
+    globals.mainMenu.loadFile(path.join(globals.CWD, "main_menu", "index.html"));
 
     // Handler for the module selector window
     globals.mainMenu.webContents.setWindowOpenHandler(() => {
@@ -366,7 +410,7 @@ app.whenReady().then(() => {
                 parent: globals.mainMenu,
 
                 webPreferences: {
-                    preload: path.join(__dirname, "module_selector", "preload.js")
+                    preload: path.join(globals.CWD, "module_selector", "preload.js")
                 }
             }
         }
@@ -487,7 +531,7 @@ ipcMain.handle("loadGame", async (ev, gameName) => {
             x: x,
             y: y,
             webPreferences: {
-                preload: path.join(__dirname, "preload.js")
+                preload: path.join(globals.CWD, "preload.js")
             }
         });
         
@@ -495,7 +539,7 @@ ipcMain.handle("loadGame", async (ev, gameName) => {
         globals.activeWindows[moduleName] = moduleWindow;
 
         // Assign the html file
-        moduleWindow.loadFile(path.join(__dirname, "modules", moduleName, "index.html"));
+        moduleWindow.loadFile(path.join(globals.CWD, "modules", moduleName, "index.html"));
 
         // Create the event handler for loading the extensions and postprocess script
         moduleWindow.webContents.once("did-finish-load", () => {
@@ -535,7 +579,7 @@ ipcMain.handle("loadGame", async (ev, gameName) => {
                     globals.loadedModules.push(moduleName);
 
                     // Broadcast the load event
-                    for (windowName in globals.activeWindows) {
+                    for (let windowName in globals.activeWindows) {
                         try {
                             globals.activeWindows[windowName].webContents.send("LOAD-" + moduleName);
                         }
