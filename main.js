@@ -109,8 +109,6 @@ const globals = {
     functionsWithReplyValue: []
 };
 
-console.log(globals.CWD);
-
 // Functions for reading/modifying file system contents
 const fileSystem = {
     // Goes through the files and builds a list of all available modules, which is put into globals.availableModules
@@ -607,7 +605,7 @@ ipcMain.handle("loadGame", async (ev, gameName) => {
 
 // Handles requests to call API functions
 ipcMain.handle("callFunction", async (ev, moduleName, functionName, args, callerName) => {
-    // Empty module name => broadcast
+    // Empty module name => broadcast   currently not utilised, may be removed
     if (moduleName == "") {
         for (let windowName in globals.activeWindows) {
             try {

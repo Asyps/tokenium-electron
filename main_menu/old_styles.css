@@ -1,0 +1,50 @@
+#title {
+    margin: 50px;
+    text-align: center;
+    font-size: 45px;
+}
+
+#remove {
+    background-color: rgb(255, 182, 193);
+}
+#remove:hover {
+    background-color: rgb(236, 155, 167);
+}
+#remove:active {
+    background-color: rgb(255, 195, 204);
+}
+
+#create {
+    background-color: rgb(144, 238, 144);
+}
+#create:hover {
+    background-color: rgb(129, 221, 129);
+}
+#create:active {
+    background-color: rgb(158, 243, 158);
+}
+
+#play {
+    background-color: rgb(135, 206, 250);
+}
+#play:hover {
+    background-color: rgb(119, 188, 231);
+}
+#play:active {
+    background-color: rgb(153, 212, 248);
+}
+
+input, select {
+    font-size: 30px;
+    width: 250px;
+}
+
+table {
+    margin-left: auto;
+    margin-right: auto;
+}
+
+td {
+    padding-left: 10px;
+    padding-right: 10px;
+}
