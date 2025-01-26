@@ -21,6 +21,7 @@ import * as errors from "./fireglue/errors.mjs"
 import * as kvstore from "./fireglue/kvstore.mjs"
 import * as socket from "./fireglue/socket.mjs"
 import * as utils from "./fireglue/utils.mjs"
+import { access } from 'fs';
 
 async function fireglueTest() {
     let ctx = new socket.SocketCtx();
@@ -370,10 +371,10 @@ fileSystem.buildAvailableModuleList();
 // Main menu handlers
 ipcMain.handle("getGameList", async () => await fileSystem.getExistingGames());
 ipcMain.handle("getAvailableModules", async () => globals.availableModules);
-ipcMain.handle("getRequiredModules", (ev, gameName) => requiredModuleList[gameName]);   // Mockup
-ipcMain.handle("getSelectedModules", (ev, gameName) => selectedModuleList[gameName]);   // Mockup
+ipcMain.handle("getRequiredModules", (_, gameName) => requiredModuleList[gameName]);   // Mockup
+ipcMain.handle("getSelectedModules", (_, gameName) => selectedModuleList[gameName]);   // Mockup
 
-ipcMain.handle("setSelectedModules", (ev, moduleData) => globals.selectedModules = moduleData);
+ipcMain.handle("setSelectedModules", (_, moduleData) => globals.selectedModules = moduleData);
 
 // Main menu
 app.whenReady().then(() => {
@@ -416,7 +417,7 @@ app.whenReady().then(() => {
 });
 
 // Load game procedure
-ipcMain.handle("loadGame", async (ev, gameName) => {
+ipcMain.handle("loadGame", async (_, gameName) => {
     // Set the selected game into global variables
     globals.gameName = gameName;
 
@@ -461,7 +462,7 @@ ipcMain.handle("loadGame", async (ev, gameName) => {
         // Create a promise that resolves once the script has finished loading
         return new Promise((resolve, reject) => {
             // Create a handler for the message about the script loading or failing
-            ipcMain.handleOnce("LOAD-SCRIPT-" + moduleName + ":" + scriptName, (ev, didScriptLoad) => {
+            ipcMain.handleOnce("LOAD-SCRIPT-" + moduleName + ":" + scriptName, (_, didScriptLoad) => {
                 if (didScriptLoad) resolve();
                 reject("Script failed to load: " + scriptName);
             });
@@ -528,8 +529,12 @@ ipcMain.handle("loadGame", async (ev, gameName) => {
             height: height,
             x: x,
             y: y,
+            frame: false,
+            resizable: false,
+            movable: false,
             webPreferences: {
-                preload: path.join(globals.CWD, "preload.js")
+                preload: path.join(globals.CWD, "preload.js"),
+                devTools: true
             }
         });
         
@@ -604,7 +609,7 @@ ipcMain.handle("loadGame", async (ev, gameName) => {
 // Communication system
 
 // Handles requests to call API functions
-ipcMain.handle("callFunction", async (ev, moduleName, functionName, args, callerName) => {
+ipcMain.handle("callFunction", async (_, moduleName, functionName, args, callerName) => {
     // Empty module name => broadcast   currently not utilised, may be removed
     if (moduleName == "") {
         for (let windowName in globals.activeWindows) {
@@ -667,10 +672,10 @@ ipcMain.handle("callFunction", async (ev, moduleName, functionName, args, caller
 });
 
 // Handler requests to register a function with a return value
-ipcMain.handle("registerFunctionWithReplyValue", (ev, moduleName, functionName) => globals.functionsWithReplyValue.push(moduleName + "-" + functionName) );
+ipcMain.handle("registerFunctionWithReplyValue", (_, moduleName, functionName) => globals.functionsWithReplyValue.push(moduleName + "-" + functionName) );
 
 // Handles questions about loaded modules or extensions
-ipcMain.handle("moduleLoadEnquiry", (ev, moduleName, extensionName) => {
+ipcMain.handle("moduleLoadEnquiry", (_, moduleName, extensionName) => {
     // This function returns two boolean values in the format [shouldSpecifiedThingBeLoaded, isModuleLoaded]
 
     // Check if the module should be loaded
@@ -680,4 +685,21 @@ ipcMain.handle("moduleLoadEnquiry", (ev, moduleName, extensionName) => {
     // If the extension is not specified, return the awnser for the module, otherwise return the awnser for an extension
     if (extensionName == undefined) return [shouldModuleBeLoaded, globals.loadedModules.includes(moduleName)];
     return [globals.selectedModules[moduleName].includes(extensionName), globals.loadedModules.includes(moduleName)];
+});
+
+
+
+
+
+
+
+// Test
+ipcMain.handle("setLayoutMode", (_, moduleName, enabled) => {
+    for (let i in globals.activeWindows) {
+        console.log(i);
+        // Set all windows to be movable, resizable, and tell them to enable their input area.
+        globals.activeWindows[i].setMovable(enabled);
+        globals.activeWindows[i].setResizable(enabled);
+        globals.activeWindows[i].webContents.send("setDragArea", enabled);
+    }
 });

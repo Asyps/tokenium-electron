@@ -1,4 +1,4 @@
-const { ipcRenderer, contextBridge } = require("electron");
+const { ipcRenderer, contextBridge, ipcMain } = require("electron");
 
 // Invoke the request to obtain module name
 (async () => window.moduleName = await ipcRenderer.invoke("obtainName"))();
@@ -27,7 +27,7 @@ contextBridge.exposeInMainWorld("callFunction", async (moduleName, functionName,
 contextBridge.exposeInMainWorld("defineAPI", (functionName, callback, hasReturnValue=false, wantsToKnowCaller=false) => {
     if (hasReturnValue) {
         // Set the handler for the function. Since it has a return value, invoke the reply event when the handler is called
-        ipcRenderer.on("API-" + functionName, async (ev, args, callerName) => {
+        ipcRenderer.on("API-" + functionName, async (_, args, callerName) => {
             await ipcRenderer.invoke("API-reply-" + window.moduleName + "-" + functionName, await callback(...args, (wantsToKnowCaller) ? callerName : undefined));
         });
 
@@ -36,7 +36,7 @@ contextBridge.exposeInMainWorld("defineAPI", (functionName, callback, hasReturnV
     }
     else {
         // Set the handler for the function
-        ipcRenderer.on("API-" + functionName, (ev, args, callerName) => {
+        ipcRenderer.on("API-" + functionName, (_, args, callerName) => {
             callback(...args, (wantsToKnowCaller) ? callerName : undefined);
         });
     }
@@ -67,7 +67,7 @@ contextBridge.exposeInMainWorld("onLoaded", async (moduleExtensionPair, callback
 
             // Create a promise that sets the event to call the function, so that the reply can be awaited
             return await new Promise((resolve, reject) => { 
-                ipcRenderer.once("LOAD-" + moduleName, async (ev) => {
+                ipcRenderer.once("LOAD-" + moduleName, async (_) => {
                     resolve(await callback(...args));
                 });
             });
@@ -94,7 +94,7 @@ contextBridge.exposeInMainWorld("callFunctionOnLoaded", async (moduleExtensionPa
             // If it is not, set an onload event to call it once it gets loaded
             // Create a promise that sets the event to call the function, so that the reply can be awaited
             return await new Promise((resolve, reject) => { 
-                ipcRenderer.once("LOAD-" + moduleName, async (ev) => {
+                ipcRenderer.once("LOAD-" + moduleName, async (_) => {
                     resolve(await ipcRenderer.invoke("callFunction", moduleName, functionName, args, window.moduleName));
                 });
             });
@@ -103,3 +103,19 @@ contextBridge.exposeInMainWorld("callFunctionOnLoaded", async (moduleExtensionPa
 });
 
 // The onLoaded and loadEnquiry functions are currently not used in the program.
+
+
+
+
+
+
+contextBridge.exposeInMainWorld("setLayoutMode", (bool) => {
+    ipcRenderer.invoke("setLayoutMode", window.moduleName, bool);
+});
+
+
+ipcRenderer.on("setDragArea", (_, enable) => {
+    console.log("Tried making window draggable");
+    
+    document.documentElement.style.webkitAppRegion = enable ? 'drag' : 'no-drag';
+});
