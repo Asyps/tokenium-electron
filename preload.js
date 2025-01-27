@@ -144,7 +144,7 @@ ipcRenderer.on("setDragAreaMode", (_, enable) => {
         dragDiv.style.webkitAppRegion = 'drag';
         //dragDiv.style.pointerEvents = 'auto';
 
-        // Add a background to add a visual clue that the drag mode is on
+        // Add a background to add a visual clue that the layout mode is on
         dragDiv.style.backgroundColor = "rgb(0, 0, 0, 0.5)";
 
         // Display the overlay
