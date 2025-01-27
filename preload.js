@@ -12,6 +12,7 @@ function processArgument(moduleExtensionPair) {
     return moduleExtensionPair;
 }
 
+
 // Internal function to control loading extensions and postload script
 contextBridge.exposeInMainWorld("announceScriptLoad", (moduleName, scriptName, isSuccess) => {
     ipcRenderer.invoke("LOAD-SCRIPT-" + moduleName + ":" + scriptName, isSuccess);
@@ -110,12 +111,57 @@ contextBridge.exposeInMainWorld("callFunctionOnLoaded", async (moduleExtensionPa
 
 
 contextBridge.exposeInMainWorld("setLayoutMode", (bool) => {
-    ipcRenderer.invoke("setLayoutMode", window.moduleName, bool);
+    ipcRenderer.invoke("setLayoutMode", bool);
 });
 
 
-ipcRenderer.on("setDragArea", (_, enable) => {
-    console.log("Tried making window draggable");
-    
-    document.documentElement.style.webkitAppRegion = enable ? 'drag' : 'no-drag';
+ipcRenderer.on("setDragAreaMode", (_, enable) => {
+    // Obtain the existing drag mode area if it exists
+    try {
+        var existingArea = document.querySelector('#drag-area');
+    } catch {
+        var existingArea = false;
+    }
+
+    if (enable && !existingArea) {
+        // If the drag are overlay should be shown but isn't, show it
+
+        // Create the drag overlay div
+        let dragDiv = document.createElement("div");
+        dragDiv.id = "drag-area";
+
+        // Ensure it always takes up the whole window space
+        dragDiv.style.position = "fixed";
+        dragDiv.style.left = "0px";
+        dragDiv.style.top = "0px";
+        dragDiv.style.width = "100%";
+        dragDiv.style.height = "100%";
+
+        // Ensure it is always in front of everything else
+        dragDiv.style.zIndex = 10000;
+
+        // Make it the window drag area
+        dragDiv.style.webkitAppRegion = 'drag';
+        //dragDiv.style.pointerEvents = 'auto';
+
+        // Add a background to add a visual clue that the drag mode is on
+        dragDiv.style.backgroundColor = "rgb(0, 0, 0, 0.5)";
+
+        // Display the overlay
+        if (document.body.firstChild) {
+            document.body.insertBefore(dragDiv, document.body.firstChild);
+        } else {
+            document.body.appendChild(dragDiv);
+        }
+    }
+    else if (!enable && existingArea) {
+        // If the drag area shouldn't be displayed but is, remove it
+        existingArea.remove();
+    }
+    // Otherwise do nothing
+});
+
+// debug
+contextBridge.exposeInMainWorld("openDevTools", () => {
+    ipcRenderer.send('toggle-devtools');
 });

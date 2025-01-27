@@ -1,5 +1,13 @@
 // Debug
 process.traceProcessWarnings = true;
+ipcMain.on('toggle-devtools', (event) => {
+    const window = BrowserWindow.getFocusedWindow();
+    if (window) {
+        window.webContents.toggleDevTools();
+    }
+});
+
+
 
 // Imports commonjs
 /*
@@ -534,7 +542,6 @@ ipcMain.handle("loadGame", async (_, gameName) => {
             movable: false,
             webPreferences: {
                 preload: path.join(globals.CWD, "preload.js"),
-                devTools: true
             }
         });
         
@@ -688,18 +695,12 @@ ipcMain.handle("moduleLoadEnquiry", (_, moduleName, extensionName) => {
 });
 
 
-
-
-
-
-
 // Test
-ipcMain.handle("setLayoutMode", (_, moduleName, enabled) => {
+ipcMain.handle("setLayoutMode", (_, enabled) => {
     for (let i in globals.activeWindows) {
-        console.log(i);
         // Set all windows to be movable, resizable, and tell them to enable their input area.
         globals.activeWindows[i].setMovable(enabled);
         globals.activeWindows[i].setResizable(enabled);
-        globals.activeWindows[i].webContents.send("setDragArea", enabled);
+        globals.activeWindows[i].webContents.send("setDragAreaMode", enabled);
     }
 });
