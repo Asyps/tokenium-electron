@@ -698,9 +698,13 @@ ipcMain.handle("moduleLoadEnquiry", (_, moduleName, extensionName) => {
 // Test
 ipcMain.handle("setLayoutMode", (_, enabled) => {
     for (let i in globals.activeWindows) {
-        // Set all windows to be movable, resizable, and tell them to enable their input area.
+        // Set all windows to be (un)movable, (un)resizable, and tell them to enable/disable their input area.
         globals.activeWindows[i].setMovable(enabled);
         globals.activeWindows[i].setResizable(enabled);
         globals.activeWindows[i].webContents.send("setDragAreaMode", enabled);
+
+        if (!enabled) {
+            globals.activeWindows[i]
+        }
     }
 });
