@@ -15,15 +15,18 @@
             align-items: center;
             justify-content: center;
             height: 100vh;
-            background: linear-gradient(135deg, #f0f4f8, #ffffff);
-            color: #333;
+            background: #222;
+            color: #ccc;
+            overflow: hidden;
+            position: relative;
+            transition: background 1s ease-in-out;
         }
 
         h1 {
             font-size: 56px;
             margin-bottom: 40px;
-            color: #333;
-            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+            color: red; /* Placeholder for signature color */
+            text-shadow: 2px 2px 4px rgba(255, 0, 0, 0.5);
         }
 
         .container {
@@ -34,7 +37,7 @@
         }
 
         .box {
-            border: 1px solid #ccc;
+            border: 1px solid #444;
             padding: 10px;
             border-radius: 8px;
             background-color: #3a3a3a;
@@ -48,7 +51,7 @@
             align-items: center;
             justify-content: center;
             gap: 8px;
-            font-size: 18px;
+            font-size: 20px; /* Increased font size */
             text-align: center;
             margin-bottom: 10px;
             color: #4CAF50;
@@ -61,151 +64,80 @@
             background-color: red;
         }
 
-        .input-group {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
+        .particle {
+            position: absolute;
+            width: 5px;
+            height: 5px;
+            background-color: rgba(255, 255, 255, 0.5);
+            border-radius: 50%;
+            opacity: 0;
+            animation: floatParticles 5s infinite;
         }
 
-        .input-group input {
-            width: calc(100% - 16px);
-            padding: 6px;
-            border: 1px solid #aaa;
-            border-radius: 4px;
-            background-color: #ffffff;
-            color: #333;
+        @keyframes floatParticles {
+            0% {
+                transform: translateY(0);
+                opacity: 0;
+            }
+            50% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-100vh);
+                opacity: 0;
+            }
         }
 
-        .box button {
-            width: 100%;
-            padding: 10px;
-            margin-top: 10px;
-            border-radius: 8px;
-            font-size: 16px;
-            text-align: center;
-            cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s, background-color 0.2s;
-        }
-
-        .box button.save {
-            border: 1px solid #4CAF50;
-            background-color: #e0f7da;
-            color: #333;
-        }
-
-        .box button.save:hover {
-            background-color: #b2fab4;
-            transform: translateY(-2px);
-            box-shadow: 4px 4px 12px rgba(0, 0, 0, 0.15);
-        }
-
-        .box button.delete {
-            border: 1px solid #d32f2f;
-            background-color: #f8d7da;
-            color: #333;
-        }
-
-        .box button.delete:hover {
-            background-color: #f4a6a6;
-        }
-
-        .player-list {
-            border: 1px solid #aaa;
-            border-radius: 4px;
-            padding: 5px;
-            max-height: 100px;
-            overflow-y: auto;
-            margin-bottom: 10px;
-            background-color: #ffffff;
-            color: #333;
-        }
-
-        .player {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-bottom: 5px;
-        }
-
-        .buttons {
-            display: flex;
-            gap: 10px;
-        }
-
-        .buttons button {
-            padding: 12px 24px;
-            font-size: 16px;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: background-color 0.3s, transform 0.2s;
-        }
-
-        .buttons button.confirm {
-            border: 1px solid #4CAF50;
-            background-color: #c8e6c9;
-            color: #333;
-        }
-
-        .buttons button.confirm:hover {
-            background-color: #a5d6a7;
-            transform: translateY(-2px);
-        }
-
-        .buttons button.confirm-start {
-            border: 1px solid #0288d1;
-            background-color: #bbdefb;
-            color: #333;
-        }
-
-        .buttons button.confirm-start:hover {
-            background-color: #90caf9;
-            transform: translateY(-2px);
+        /* Disabled button style */
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background-color: #555;
+            color: #999;
+            border: 1px solid #777;
         }
     </style>
 </head>
 <body>
-    <h1>Game Name</h1>
+    <h1 id="game-name">Game Name</h1>
     <div class="container">
         <div class="box">
             <h2>
                 <div class="status-light" id="status-light"></div>
                 <span id="server-status-text">Server is offline</span>
             </h2>
-            <div class="input-group">
-                <label for="server-address">IP Address and Port</label>
-                <input type="text" id="server-address">
-                <label for="server-password">Password</label>
-                <input type="password" id="server-password">
-            </div>
-            <button class="save">Save</button>
+            <input type="text" id="server-address" placeholder="IP Address and Port">
+            <input type="password" id="server-password" placeholder="Password">
+            <button id="save-button">Save</button>
         </div>
-
         <div class="box">
             <h2>Game Settings</h2>
-            <button>Change Modules</button>
-            <button class="delete">Delete Game</button>
+            <button id="modules-button" disabled>Change Modules</button>
+            <button id="delete-button" disabled>Delete Game</button>
         </div>
-
         <div class="box">
             <h2>Players Connected</h2>
             <div>Online: <span id="online-players">2</span> / <span id="total-players">6</span></div>
-            <div class="player-list" id="player-list">
-                <div class="player">
-                    <div class="status-light" style="background-color: green;"></div>
-                    <span>Player One</span>
-                </div>
-                <div class="player">
-                    <div class="status-light" style="background-color: green;"></div>
-                    <span>Player Two</span>
-                </div>
-            </div>
+            <div class="player-list" id="player-list"></div>
             <div>Player Limit: <span id="player-limit">0</span></div>
         </div>
     </div>
-
     <div class="buttons">
-        <button class="confirm">Confirm</button>
-        <button class="confirm-start">Confirm and Start</button>
+        <button id="return-button">Return</button>
+        <button id="start-button" disabled>Start</button>
     </div>
+    <script>
+        function createParticles() {
+            for (let i = 0; i < 20; i++) {
+                let particle = document.createElement("div");
+                particle.classList.add("particle");
+                document.body.appendChild(particle);
+                particle.style.left = `${Math.random() * 100}vw`;
+                particle.style.top = `${Math.random() * 100}vh`;
+                particle.style.animationDuration = `${3 + Math.random() * 5}s`;
+            }
+        }
+        createParticles();
+    </script>
 </body>
 </html>
