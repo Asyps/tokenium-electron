@@ -29,7 +29,7 @@ h1 {
     text-shadow: 2px 2px 4px rgba(255, 0, 0, 0.5);
 }
 
-/* Menu container – layout remains unchanged */
+/* Adjust menu position to be slightly higher */
 .menu {
     display: flex;
     flex-direction: column;
@@ -37,29 +37,22 @@ h1 {
     gap: 20px;
     width: 90%;
     max-width: 400px;
+    transform: translateY(-3vh); /* Moves the menu higher */
 }
 
-/* Top controls layout */
+/* ---------------------- */
+/* TOP CONTROLS */
+/* ---------------------- */
 .top-controls {
     display: flex;
+    flex-direction: column;
     gap: 12px;
     width: 100%;
     margin-bottom: 40px;
 }
 
-/* Base style for select and button elements */
-select, button {
-    font-family: inherit;
-    border-radius: 8px;
-    transition: transform 0.2s, box-shadow 0.2s, background-color 0.2s, color 0.2s;
-}
-
-/* ---------------------- */
-/* SELECT ELEMENT STYLING */
-/* ---------------------- */
+/* Dropdown styling */
 .top-controls select {
-    flex: 1;
-    min-width: 180px;
     width: 100%;
     padding: 10px;
     border: 1px solid #ccc;
@@ -67,6 +60,7 @@ select, button {
     color: #333;
     box-shadow: 2px 2px 6px rgba(0,0,0,0.1);
     cursor: pointer;
+    border-radius: 8px; /* Rounded corners */
 }
 
 .top-controls select:hover {
@@ -74,35 +68,21 @@ select, button {
     box-shadow: 4px 4px 12px rgba(0,0,0,0.15);
 }
 
-/* ---------------------------- */
-/* SETTINGS (ICON) BUTTON STYLE */
-/* ---------------------------- */
-#settings-button {
-    flex: 0.2;
+/* Container for the start and settings buttons */
+.control-buttons {
     display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 10px;
-    border: 1px solid #ffffff;
-    background-color: transparent;
-    cursor: pointer;
+    gap: 12px;
+    width: 100%;
 }
 
-#settings-button:hover {
-    background-color: #f7f7f7;
-    transform: translateY(-2px);
-    box-shadow: 4px 4px 12px rgba(0,0,0,0.15);
-}
-
-#settings-button:active {
-    background-color: #ffffff;
-}
-
-/* Settings icon (unchanged) */
-.settings-icon {
-    width: 16px;
-    height: 16px;
-    background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%23333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 5 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 5 8.49a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 8.49 5a1.65 1.65 0 0 0 1.51-1V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1.51 1 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19 8.49a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09A1.65 1.65 0 0 0 19.4 15z"/></svg>') center/contain no-repeat;
+.control-buttons button {
+    flex: 1;
+    border-radius: 8px;
+    transition: transform 0.2s, box-shadow 0.2s, background-color 0.2s, color 0.2s;
+    font-family: inherit;
+    font-size: 16px;
+    font-weight: bold;
+    text-align: center;
 }
 
 /* ---------------------- */
@@ -114,6 +94,7 @@ select, button {
     color: #4CAF50;
     background-color: transparent;
     cursor: pointer;
+    flex: 2;  /* Wider than settings button */
 }
 
 #start-button:hover {
@@ -129,6 +110,29 @@ select, button {
 }
 
 /* ---------------------- */
+/* SETTINGS BUTTON (Plain White) */
+/* ---------------------- */
+#settings-button {
+    padding: 10px;
+    border: 1px solid #ffffff;
+    color: #ffffff;
+    background-color: transparent;
+    cursor: pointer;
+}
+
+#settings-button:hover {
+    background-color: #dcdcdc;  /* Light gray on hover */
+    transform: translateY(-2px);
+    box-shadow: 4px 4px 12px rgba(0,0,0,0.15);
+    color: black;
+}
+
+#settings-button:active {
+    background-color: #ffffff;  /* Bright white when clicked */
+    color: black;
+}
+
+/* ---------------------- */
 /* ACTION BUTTONS (Join & Create) */
 /* ---------------------- */
 .action-button {
@@ -141,10 +145,8 @@ select, button {
     cursor: pointer;
     box-shadow: 2px 2px 6px rgba(0,0,0,0.1);
     background-color: transparent;
-    /* Let the following ID rules set the border and color */
 }
 
-/* Join button: using blue as X (from old main menu) */
 #join-button {
     border: 1px solid #90caf9;
     color: #90caf9;
@@ -163,7 +165,6 @@ select, button {
     color: white;
 }
 
-/* Create button: using orange as X (from old main menu) */
 #create-button {
     border: 1px solid #ffb74d;
     color: #ffb74d;
@@ -197,7 +198,7 @@ select, button {
 }
 
 #login-button:hover {
-    background-color: #f7f7f7;
+    background-color: #dcdcdc;
     transform: translateY(-2px);
     box-shadow: 4px 4px 12px rgba(0,0,0,0.15);
     color: black;
@@ -205,7 +206,7 @@ select, button {
 
 #login-button:active {
     background-color: #ffffff;
-    color: white;
+    color: black;
 }
 
 /* ---------------------- */
@@ -213,9 +214,26 @@ select, button {
 /* ---------------------- */
 .action-description {
     font-size: 14px;
-    color: #555;
+    color: white;
     text-align: center;
     margin-top: -8px;
+}
+
+/* ---------------------- */
+/* Disabled button state */
+/* ---------------------- */
+button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    filter: grayscale(100%);
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+/* More specific rules for the control buttons */
+#start-button:disabled,
+#settings-button:disabled {
+    cursor: not-allowed !important;
 }
 
 /* ---------------------- */
@@ -225,4 +243,34 @@ select, button {
     0% { background-position: 0% 50%; }
     50% { background-position: 100% 50%; }
     100% { background-position: 0% 50%; }
+}
+
+/* ---------------------- */
+/* Background Particle Effect */
+/* ---------------------- */
+.particle {
+    position: absolute;
+    background-color: rgba(255, 255, 255, 0.8);
+    border-radius: 50%;
+    opacity: 0;
+    pointer-events: none;
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+    animation: floatParticles linear infinite;
+}
+
+@keyframes floatParticles {
+    0% {
+        transform: translateY(0);
+        opacity: 0;
+    }
+    30% {
+        opacity: 1;
+    }
+    70% {
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(-120vh);
+        opacity: 0;
+    }
 }

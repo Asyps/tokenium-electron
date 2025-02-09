@@ -18,7 +18,7 @@ const path = require("path");
 
 // Imports
 
-import { app, BrowserWindow, ipcMain, screen } from 'electron';
+import { app, BrowserWindow, ipcMain, screen, Menu } from 'electron';
 import fs from "fs/promises";
 import path from "path";
 
@@ -390,7 +390,7 @@ app.whenReady().then(() => {
     globals.mainMenu = new BrowserWindow({
         // To do - security stuff
         width: 800,
-        height: 600,
+        height: 650,
         x: 25,
         y: 50,
         webPreferences: {
@@ -398,8 +398,10 @@ app.whenReady().then(() => {
         }
     });
 
+    Menu.setApplicationMenu(null);
+
     // Load the .js
-    globals.mainMenu.loadFile(path.join(globals.CWD, "main_menu", "index.html"));
+    globals.mainMenu.loadFile(path.join(globals.CWD, "player_settings", "index.html"));
 
     // Handler for the module selector window
     globals.mainMenu.webContents.setWindowOpenHandler(() => {
