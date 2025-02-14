@@ -1,0 +1,247 @@
+/* Base styling similar to the player settings menu */
+html,
+body {
+    overflow: hidden;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    background: linear-gradient(-45deg, #1e1e1e, #2a2a2a, #3a3a3a);
+    background-size: 400% 400%;
+    animation: gradientShift 10s ease infinite;
+    color: #ccc;
+}
+
+h1 {
+    font-size: 56px;
+    margin-bottom: 40px;
+    color: red;
+    /* Signature color */
+    text-shadow: 2px 2px 4px rgba(255, 0, 0, 0.5);
+}
+
+/* Container holding the three boxes */
+.container {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+/* Box styling */
+.box {
+    border: 1px solid #ccc;
+    padding: 10px;
+    border-radius: 8px;
+    background-color: #3a3a3a;
+    box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.2);
+    width: 220px;
+    color: white;
+}
+
+.box h2 {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 20px;
+    text-align: center;
+    margin-bottom: 10px;
+    color: #4CAF50;
+}
+
+/* Status light indicator */
+.status-light {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: red;
+}
+
+/* Input group styling */
+.input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.input-group label {
+    font-size: 14px;
+    margin-bottom: 4px;
+}
+
+.input-group input {
+    width: calc(100% - 16px);
+    padding: 6px;
+    border: 1px solid #aaa;
+    border-radius: 4px;
+    background-color: #fff;
+    color: #333;
+}
+
+/* Access list styling */
+.access-list h3 {
+    font-size: 18px;
+    margin-bottom: 8px;
+    text-align: center;
+}
+
+.player-list {
+    border: 1px solid #aaa;
+    border-radius: 4px;
+    padding: 5px;
+    max-height: 100px;
+    overflow-y: auto;
+    margin-bottom: 10px;
+    background-color: #fff;
+    color: #333;
+}
+
+.player {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 5px;
+}
+
+/* Base style for all buttons */
+button {
+    padding: 10px;
+    margin-top: 10px;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 16px;
+    font-weight: bold;
+    text-align: center;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s, background-color 0.2s, color 0.2s;
+    background-color: transparent;
+}
+
+/* Save buttons (green) */
+button.save {
+    border: 1px solid #4CAF50;
+    color: #4CAF50;
+}
+
+button.save:hover {
+    background-color: #88fc3f;
+    transform: translateY(-2px);
+    box-shadow: 4px 4px 12px rgba(0, 0, 0, 0.15);
+    color: black;
+}
+
+button.save:active {
+    background-color: #4CAF50;
+    color: white;
+}
+
+/* Modules button (blue) */
+button.modules {
+    border: 1px solid #0288d1;
+    color: #0288d1;
+}
+
+button.modules:hover {
+    background-color: #81D4FA;
+    transform: translateY(-2px);
+    box-shadow: 4px 4px 12px rgba(0, 0, 0, 0.15);
+    color: black;
+}
+
+button.modules:active {
+    background-color: #0288d1;
+    color: white;
+}
+
+/* Owner buttons (placeholder orange) */
+button.owner-button {
+    border: 1px solid #FFA500;
+    color: #FFA500;
+}
+
+button.owner-button:hover {
+    background-color: #FFB733;
+    transform: translateY(-2px);
+    box-shadow: 4px 4px 12px rgba(0, 0, 0, 0.15);
+    color: black;
+}
+
+button.owner-button:active {
+    background-color: #FFA500;
+    color: white;
+}
+
+/* Confirmation buttons container */
+.buttons {
+    display: flex;
+    gap: 10px;
+}
+
+/* Return button (blue) */
+.buttons button.return {
+    border: 1px solid #0288d1;
+    color: #0288d1;
+    padding: 12px 24px;
+    font-size: 18px;
+}
+
+.buttons button.return:hover {
+    background-color: #81D4FA;
+    transform: translateY(-2px);
+    color: black;
+}
+
+.buttons button.return:active {
+    background-color: #0288d1;
+    color: white;
+}
+
+/* Start button (green) */
+.buttons button.start {
+    border: 1px solid #4CAF50;
+    color: #4CAF50;
+    padding: 14px 40px;
+    font-size: 18px;
+}
+
+.buttons button.start:hover {
+    background-color: #88fc3f;
+    transform: translateY(-2px);
+    color: black;
+}
+
+.buttons button.start:active {
+    background-color: #4CAF50;
+    color: white;
+}
+
+/* Disabled button state */
+button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    filter: grayscale(100%);
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+/* Background animation for gradient (used by all menus) */
+@keyframes gradientShift {
+    0% {
+        background-position: 0% 50%;
+    }
+
+    50% {
+        background-position: 100% 50%;
+    }
+
+    100% {
+        background-position: 0% 50%;
+    }
+}
