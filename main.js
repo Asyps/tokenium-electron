@@ -401,7 +401,7 @@ app.whenReady().then(() => {
     Menu.setApplicationMenu(null);
 
     // Load the .js
-    globals.mainMenu.loadFile(path.join(globals.CWD, "player_settings", "index.html"));
+    globals.mainMenu.loadFile(path.join(globals.CWD, "main_menu", "index.html"));
 
     // Handler for the module selector window
     globals.mainMenu.webContents.setWindowOpenHandler(() => {
@@ -433,7 +433,7 @@ ipcMain.handle("loadGame", async (_, gameName) => {
 
     
     // Get the main display width and height
-    const workAreaSize = screen.getPrimaryDisplay().workAreaSize;
+    globals.workAreaSize = screen.getPrimaryDisplay().workAreaSize;
     
     // Obtain the window layout
     // First try getting the local layout from the window_layout.json file
@@ -446,23 +446,29 @@ ipcMain.handle("loadGame", async (_, gameName) => {
         // for now, use a mockup for this case
         console.log("Getting layout from server");
         globals.windowLayout = {
-            tokenium: {
-                height: 0.6,
-                width: 0.5,
-                x: 0.375,
-                y: 0
+            "tokenium": {
+                "x": 0.283203125,
+                "y": 0,
+                "width": 0.5006510416666666,
+                "height": 0.6299019607843137
             },
-            comms_test_receiver_1: {
-                height: 0.2,
-                width: 0.125,
-                x: 0.875,
-                y: 0
+            "comms_test_receiver_1": {
+                "height": 0.2,
+                "width": 0.125,
+                "x": 0.875,
+                "y": 0
             },
-            chat: {
-                height: 0.8,
-                width: 0.125,
-                x: 0.875,
-                y: 0.2
+            "chat": {
+                "x": 0.7838541666666666,
+                "y": 0.18627450980392157,
+                "width": 0.21614583333333334,
+                "height": 0.8137254901960784
+            },
+            "window_layout_test": {
+                "x": 0.7838541666666666,
+                "y": 0,
+                "width": 0.21614583333333334,
+                "height": 0.1875
             }
         }
     }
@@ -510,6 +516,9 @@ ipcMain.handle("loadGame", async (_, gameName) => {
     // Modules will call this event in the order they are declared
     ipcMain.handle("obtainName", () => moduleNameFIFO.shift());
 
+    // Keeping track of displayed windows
+    var windowCount = 0;
+
     // For every module needed to be loaded...
     for (let moduleName in globals.selectedModules) {
         // Get the module window information
@@ -517,16 +526,17 @@ ipcMain.handle("loadGame", async (_, gameName) => {
 
         // If the info about the window exists, convert relative screen value to px
         if (windowInfo) {
-            var width = Math.round(windowInfo.width * workAreaSize.width);
-            var height = Math.round(windowInfo.height * workAreaSize.height);
-            var x = Math.round(windowInfo.x * workAreaSize.width);
-            var y = Math.round(windowInfo.y * workAreaSize.height);
+            var width = Math.round(windowInfo.width * globals.workAreaSize.width);
+            var height = Math.round(windowInfo.height * globals.workAreaSize.height);
+            var x = Math.round(windowInfo.x * globals.workAreaSize.width);
+            var y = Math.round(windowInfo.y * globals.workAreaSize.height);
         }
         else {      // If the info about the window doesn't exist, use default values in px
             var width = 800;
             var height = 600;
-            var x = 50;
-            var y = 50;
+            var x = 50 + 60 * windowCount;
+            var y = 50 + 60 * windowCount;
+            windowCount++;
         }
 
         // Put the module name in moduleNameFIFO
@@ -705,8 +715,15 @@ ipcMain.handle("setLayoutMode", (_, enabled) => {
         globals.activeWindows[i].setResizable(enabled);
         globals.activeWindows[i].webContents.send("setDragAreaMode", enabled);
 
+        // When the mode gets disabled, save the layout
         if (!enabled) {
-            globals.activeWindows[i]
+            globals.windowLayout[i] = globals.activeWindows[i].getBounds();
+
+            // Convert the px to relative size
+            globals.windowLayout[i].width /= globals.workAreaSize.width;
+            globals.windowLayout[i].height /= globals.workAreaSize.height;
+            globals.windowLayout[i].x /= globals.workAreaSize.width;
+            globals.windowLayout[i].y /= globals.workAreaSize.height;
         }
     }
 });
