@@ -1,6 +1,6 @@
 // Debug
 process.traceProcessWarnings = true;
-ipcMain.on('toggle-devtools', (event) => {
+ipcMain.handle('toggle-devtools', (event) => {
     const window = BrowserWindow.getFocusedWindow();
     if (window) {
         window.webContents.toggleDevTools();
@@ -707,6 +707,8 @@ ipcMain.handle("moduleLoadEnquiry", (_, moduleName, extensionName) => {
 });
 
 
+
+
 // Test
 ipcMain.handle("setLayoutMode", (_, enabled) => {
     for (let i in globals.activeWindows) {
@@ -726,4 +728,10 @@ ipcMain.handle("setLayoutMode", (_, enabled) => {
             globals.windowLayout[i].y /= globals.workAreaSize.height;
         }
     }
+});
+
+// API to quit the app
+ipcMain.handle("shutdownGame", (_, restart=false) => {
+    if (restart) app.relaunch();
+    app.quit();
 });

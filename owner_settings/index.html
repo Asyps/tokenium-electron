@@ -13,41 +13,41 @@
   <div class="container">
     <!-- Left Box: Server Information -->
     <div class="box">
-      <h2>
+      <h2 class="header-with-light">
         <div class="status-light" id="server-status-light"></div>
         <span>Server is <span id="server-status-text">offline</span></span>
       </h2>
-      <div class="input-group">
-        <label for="server-address">IP Address and Port</label>
-        <input type="text" id="server-address">
-        <label for="server-password">Password</label>
-        <input type="password" id="server-password">
-      </div>
+
+      <label for="server-address">IP Address and Port</label>
+      <input type="text" id="server-address">
+
+      <label for="server-password">Password</label>
+      <input type="password" id="server-password">
+
       <hr>
-      <div class="input-group">
-        <label for="game-name-input">Game Name</label>
-        <input type="text" id="game-name-input">
-      </div>
-      <div class="color-picker">
+
+      <label for="game-name-input">Game Name</label>
+      <input type="text" id="game-name-input">
+
+      <div class="color-picker-container">
         <input type="color" id="signature-color">
         <label for="signature-color">Characteristic color</label>
       </div>
+
       <button class="save" id="save-server-info-button">Save</button>
     </div>
     
     <!-- Middle Column: Two Stacked Boxes -->
     <div class="middle-column">
-      <!-- Top Box: Local Settings -->
       <div class="box">
         <h2>Local Settings</h2>
         <button class="modules" id="local-module-settings-button">Change local modules</button>
         <button class="delete" id="delete-game-button">Delete game from client</button>
       </div>
-      <!-- Bottom Box: Server Settings -->
       <div class="box">
         <h2>Server Settings</h2>
         <button class="owner-button" id="default-modules-button">Change default modules</button>
-        <button class="owner-button" id="window-layout-button">Set the default<br>window layout</button>
+        <button class="owner-button" id="window-layout-button">Set default layout</button>
       </div>
     </div>
     
@@ -55,19 +55,18 @@
     <div class="box">
       <h2>Player Settings</h2>
       <div class="player-info">
-        <div class="inline-status">
-          <div class="status-light" style="background-color: green;"></div>
-          <span>Online: <span id="online-players">2</span> / <span id="total-players">6</span></span>
-        </div>
+        <span>Online: <span id="online-players">2</span> / <span id="total-players">6</span></span>
       </div>
-      <div class="player-list" id="player-list">
-        <div class="player">
-          <div class="status-light" style="background-color: green;"></div>
-          <span>Player One</span>
-        </div>
-        <div class="player">
-          <div class="status-light" style="background-color: red;"></div>
-          <span>Player Two</span>
+      <div class="player-list-container">
+        <div class="player-list" id="player-list">
+          <div class="player">
+            <div class="status-light" style="background-color: green;"></div>
+            <span>Player One</span>
+          </div>
+          <div class="player">
+            <div class="status-light" style="background-color: red;"></div>
+            <span>Player Two</span>
+          </div>
         </div>
       </div>
       <div class="player-limit">

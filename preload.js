@@ -163,5 +163,13 @@ ipcRenderer.on("setDragAreaMode", (_, enable) => {
 
 // debug
 contextBridge.exposeInMainWorld("openDevTools", () => {
-    ipcRenderer.send('toggle-devtools');
+    ipcRenderer.invoke('toggle-devtools');
+});
+
+
+
+
+// Shutdown api (temporary, will be accessible only to the system "button panel" module)
+contextBridge.exposeInMainWorld("shutdown", (restart) => {
+    ipcRenderer.invoke("shutdownGame", restart);
 });
