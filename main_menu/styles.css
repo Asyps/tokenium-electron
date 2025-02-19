@@ -55,9 +55,10 @@ h1 {
 .top-controls select {
     width: 100%;
     padding: 10px;
-    border: 1px solid #ccc;
+    border: 2px solid #ccc;
     background: #ffffff;
     color: #333;
+    font-size: 16px;
     box-shadow: 2px 2px 6px rgba(0,0,0,0.1);
     cursor: pointer;
     border-radius: 8px; /* Rounded corners */
@@ -80,7 +81,7 @@ h1 {
     border-radius: 8px;
     transition: transform 0.2s, box-shadow 0.2s, background-color 0.2s, color 0.2s;
     font-family: inherit;
-    font-size: 16px;
+    font-size: 20px;
     font-weight: bold;
     text-align: center;
 }
@@ -90,7 +91,7 @@ h1 {
 /* ---------------------- */
 #start-button {
     padding: 10px;
-    border: 1px solid #4CAF50;
+    border: 2px solid #4CAF50;
     color: #4CAF50;
     background-color: transparent;
     cursor: pointer;
@@ -114,7 +115,7 @@ h1 {
 /* ---------------------- */
 #settings-button {
     padding: 10px;
-    border: 1px solid #ffffff;
+    border: 2px solid #ffffff;
     color: #ffffff;
     background-color: transparent;
     cursor: pointer;
@@ -139,7 +140,7 @@ h1 {
     width: 100%;
     padding: 10px;
     border-radius: 8px;
-    font-size: 16px;
+    font-size: 18px;
     font-weight: bold;
     text-align: center;
     cursor: pointer;
@@ -148,7 +149,7 @@ h1 {
 }
 
 #join-button {
-    border: 1px solid #90caf9;
+    border: 2px solid #90caf9;
     color: #90caf9;
     background-color: transparent;
 }
@@ -166,7 +167,7 @@ h1 {
 }
 
 #create-button {
-    border: 1px solid #ffb74d;
+    border: 2px solid #ffb74d;
     color: #ffb74d;
     background-color: transparent;
 }
@@ -192,7 +193,7 @@ h1 {
     width: auto;
     max-width: 200px;
     margin-top: 20px;
-    border: 1px solid #ffffff;
+    border: 2px solid #ffffff;
     color: #ffffff;
     background-color: transparent;
 }

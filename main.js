@@ -707,9 +707,7 @@ ipcMain.handle("moduleLoadEnquiry", (_, moduleName, extensionName) => {
 });
 
 
-
-
-// Test
+// Layout mode
 ipcMain.handle("setLayoutMode", (_, enabled) => {
     for (let i in globals.activeWindows) {
         // Set all windows to be (un)movable, (un)resizable, and tell them to enable/disable their input area.
@@ -732,6 +730,7 @@ ipcMain.handle("setLayoutMode", (_, enabled) => {
 
 // API to quit the app
 ipcMain.handle("shutdownGame", (_, restart=false) => {
+    if (globals.gameName) fileSystem.saveWindowLayout();
     if (restart) app.relaunch();
     app.quit();
 });

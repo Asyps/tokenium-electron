@@ -107,6 +107,7 @@ contextBridge.exposeInMainWorld("callFunctionOnLoaded", async (moduleExtensionPa
 
 
 
+// Drag area mode
 ipcRenderer.on("setDragAreaMode", (_, enable) => {
     // Obtain the existing drag mode area if it exists
     try {
@@ -153,20 +154,21 @@ ipcRenderer.on("setDragAreaMode", (_, enable) => {
     // Otherwise do nothing
 });
 
-
-
 // debug
 contextBridge.exposeInMainWorld("openDevTools", () => {
     ipcRenderer.invoke('toggle-devtools');
 });
 
 
-// temporary, will be accessible only to the system "button panel" module
-// Shutdown api
+
+// ** Exclusive main process API for the system module **
+
+// Shutdown API
 contextBridge.exposeInMainWorld("shutdown", (restart) => {
     ipcRenderer.invoke("shutdownGame", restart);
 });
 
+// Toggle layout mode API
 contextBridge.exposeInMainWorld("setLayoutMode", (bool) => {
     ipcRenderer.invoke("setLayoutMode", bool);
 });
