@@ -264,6 +264,13 @@ button#window-layout-button:active {
     color: white;
 }
 
+/* Disabled button styling */
+button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    filter: grayscale(50%);
+}
+
 /* Fix Start and Return button sizes & alignment */
 .buttons {
     display: flex;
@@ -277,43 +284,7 @@ button#window-layout-button:active {
     font-weight: bold;
 }
 
-/* Special disabled state style for all buttons */
-button:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-    filter: grayscale(100%);
-    transform: none !important;
-    box-shadow: none !important;
-}
-
-/* Background animation keyframes */
-@keyframes gradientShift {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
-}
-
-/* Particle styles and animation */
-.particle {
-    position: absolute;
-    width: 5px;
-    height: 5px;
-    background-color: rgba(255, 255, 255, 0.5);
-    border-radius: 50%;
-    opacity: 0;
-    animation: floatParticles 5s infinite;
-}
-
-@keyframes floatParticles {
-    0% {
-        transform: translateY(0);
-        opacity: 0;
-    }
-    50% {
-        opacity: 1;
-    }
-    100% {
-        transform: translateY(-100vh);
-        opacity: 0;
-    }
+@keyframes moveParticles {
+    from { transform: translateY(0px); }
+    to { transform: translateY(-100vh); }
 }

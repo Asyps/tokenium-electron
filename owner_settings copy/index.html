@@ -8,6 +8,8 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+  <canvas id="particle-canvas"></canvas>
+  
   <h1 id="game-name">Game Name</h1>
   
   <div class="container">
@@ -49,16 +51,7 @@
         <span>Online: <span id="online-players">2</span> / <span id="total-players">6</span></span>
       </div>
       <div class="player-list-container">
-        <div class="player-list" id="player-list">
-          <div class="player">
-            <div class="status-light" style="background-color: green;"></div>
-            <span>Player One</span>
-          </div>
-          <div class="player">
-            <div class="status-light" style="background-color: green;"></div>
-            <span>Player Two</span>
-          </div>
-        </div>
+        <div class="player-list" id="player-list"></div>
       </div>
       <div class="player-limit">
         <span>Player Limit: <span id="player-limit">0</span></span>
