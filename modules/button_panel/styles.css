@@ -1,0 +1,40 @@
+button {
+    margin: 8px;
+    padding: 0px;
+}
+
+image {
+    width: 80%;
+    height: 80%;
+}
+
+
+.size-3 {
+    width: 80px;
+    height: 80px;
+}
+
+.size-2 {
+    width: 64px;
+    height: 64px;
+}
+
+.size-1 {
+    width: 48px;
+    height: 48px;
+}
+
+.img-size-3 {
+    width: 64px;
+    height: 64px;
+}
+
+.img-size-2 {
+    width: 56px;
+    height: 56px;
+}
+
+.img-size-1 {
+    width: 40px;
+    height: 40px;
+}

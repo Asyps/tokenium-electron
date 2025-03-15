@@ -398,7 +398,7 @@ app.whenReady().then(() => {
         }
     });
 
-    Menu.setApplicationMenu(null);
+    //Menu.setApplicationMenu(null);
 
     // Load the .js
     globals.mainMenu.loadFile(path.join(globals.CWD, "main_menu", "index.html"));
@@ -549,7 +549,7 @@ ipcMain.handle("loadGame", async (_, gameName) => {
             height: height,
             x: x,
             y: y,
-            frame: false,
+            //frame: false,
             resizable: false,
             movable: false,
             webPreferences: {
@@ -710,20 +710,31 @@ ipcMain.handle("moduleLoadEnquiry", (_, moduleName, extensionName) => {
 // Layout mode
 ipcMain.handle("setLayoutMode", (_, enabled) => {
     for (let i in globals.activeWindows) {
-        // Set all windows to be (un)movable, (un)resizable, and tell them to enable/disable their input area.
-        globals.activeWindows[i].setMovable(enabled);
-        globals.activeWindows[i].setResizable(enabled);
-        globals.activeWindows[i].webContents.send("setDragAreaMode", enabled);
+        try {
+            // Set all windows to be (un)movable, (un)resizable, and tell them to enable/disable their input area.
+            globals.activeWindows[i].setMovable(enabled);
+            globals.activeWindows[i].setResizable(enabled);
+            globals.activeWindows[i].webContents.send("setDragAreaMode", enabled);
 
-        // When the mode gets disabled, save the layout
-        if (!enabled) {
-            globals.windowLayout[i] = globals.activeWindows[i].getBounds();
+            // When the mode gets disabled, save the layout
+            if (!enabled) {
+                globals.windowLayout[i] = globals.activeWindows[i].getBounds();
 
-            // Convert the px to relative size
-            globals.windowLayout[i].width /= globals.workAreaSize.width;
-            globals.windowLayout[i].height /= globals.workAreaSize.height;
-            globals.windowLayout[i].x /= globals.workAreaSize.width;
-            globals.windowLayout[i].y /= globals.workAreaSize.height;
+                // Convert the px to relative size
+                globals.windowLayout[i].width /= globals.workAreaSize.width;
+                globals.windowLayout[i].height /= globals.workAreaSize.height;
+                globals.windowLayout[i].x /= globals.workAreaSize.width;
+                globals.windowLayout[i].y /= globals.workAreaSize.height;
+            }
+        }
+        catch {
+            // If the window mode change fails, the window was probably closed
+            // Remove the destroyed window object from the list of active windows
+            delete globals.activeWindows[i];
+
+            // Delete the module from loadedModules if it is there
+            let index = globals.loadedModules.indexOf(i);
+            if (index != -1) globals.loadedModules.splice(index, 1);
         }
     }
 });
