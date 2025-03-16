@@ -711,21 +711,25 @@ ipcMain.handle("moduleLoadEnquiry", (_, moduleName, extensionName) => {
 ipcMain.handle("setLayoutMode", (_, enabled) => {
     for (let i in globals.activeWindows) {
         try {
-            // Set all windows to be (un)movable, (un)resizable, and tell them to enable/disable their input area.
-            globals.activeWindows[i].setMovable(enabled);
-            globals.activeWindows[i].setResizable(enabled);
-            globals.activeWindows[i].webContents.send("setDragAreaMode", enabled);
-
-            // When the mode gets disabled, save the layout
+            // When the mode gets disabled, force a resize event fire and save the layout
             if (!enabled) {
+                // Save the bounds
                 globals.windowLayout[i] = globals.activeWindows[i].getBounds();
 
-                // Convert the px to relative size
+                // Force a resize event
+                globals.activeWindows[i].setBounds(globals.windowLayout[i]);
+
+                // Convert the bound units from px to relative size
                 globals.windowLayout[i].width /= globals.workAreaSize.width;
                 globals.windowLayout[i].height /= globals.workAreaSize.height;
                 globals.windowLayout[i].x /= globals.workAreaSize.width;
                 globals.windowLayout[i].y /= globals.workAreaSize.height;
             }
+
+            // Set all windows to be (un)movable, (un)resizable, and tell them to enable/disable their input area.
+            globals.activeWindows[i].setMovable(enabled);
+            globals.activeWindows[i].setResizable(enabled);
+            globals.activeWindows[i].webContents.send("setDragAreaMode", enabled);
         }
         catch {
             // If the window mode change fails, the window was probably closed
