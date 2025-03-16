@@ -398,7 +398,7 @@ app.whenReady().then(() => {
         }
     });
 
-    //Menu.setApplicationMenu(null);
+    Menu.setApplicationMenu(null);
 
     // Load the .js
     globals.mainMenu.loadFile(path.join(globals.CWD, "main_menu", "index.html"));
@@ -549,7 +549,7 @@ ipcMain.handle("loadGame", async (_, gameName) => {
             height: height,
             x: x,
             y: y,
-            //frame: false,
+            frame: false,
             resizable: false,
             movable: false,
             webPreferences: {
