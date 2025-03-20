@@ -1,5 +1,6 @@
 /* Assistance by Claude.ai */
 
+// Recalculates the buttons
 function recalculateButtons() {   
     // Button size range
     const minimumSize = 50;
@@ -60,8 +61,6 @@ function recalculateButtons() {
     });
 }
 
-
-
 // Creates a debouncing function which executes after delay ms after last call.
 function debounce(callback, delay) {
     let timeout;
@@ -74,5 +73,38 @@ function debounce(callback, delay) {
     }
 }
 
-// Assign the resize listener
+// Assign the recalculation function inside debouncing to the resize event
 window.addEventListener("resize", debounce(recalculateButtons, 150));
+
+
+// Toggle the layout mode
+var isLayoutModeOn = false;
+function toggleLayoutMode() {
+    isLayoutModeOn = !isLayoutModeOn;
+    window.setLayoutMode(isLayoutModeOn);
+}
+
+// API for adding buttons
+window.defineAPI("registerSystemButton", function (callbackName, iconPath) {
+    // Create the button
+    let button = document.createElement("button");
+
+    // Assign the ID and the listener
+    button.id = "moduleButton-" + callbackName;
+    button.addEventListener("click", () => {
+        window.callFunction(arguments[2], "system-button-" + callbackName);
+    });
+
+    // Create the image
+    let img = document.createElement("img");
+
+    // Assign the src
+    img.src = "../" + arguments[2] + "/" + iconPath;
+
+    // Assemble the button and add it to DOM
+    button.appendChild(img);
+    document.body.appendChild(button);
+    
+    // Recalculate the button layout
+    recalculateButtons();
+}, false, true);

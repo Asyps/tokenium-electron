@@ -17,3 +17,8 @@ button {
 image {
     transition: width 300ms, height 300ms;
 }
+
+.layout_mode_wrapper {
+    position: relative;  /* Allows child to use z-index */
+    z-index: 10001;
+}

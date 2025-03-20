@@ -1,5 +1,7 @@
 // Debug
-process.traceProcessWarnings = true;
+const isDebugMode = process.argv.includes('--d');
+
+process.traceProcessWarnings = isDebugMode;
 ipcMain.handle('toggle-devtools', (event) => {
     const window = BrowserWindow.getFocusedWindow();
     if (window) {
@@ -398,7 +400,7 @@ app.whenReady().then(() => {
         }
     });
 
-    Menu.setApplicationMenu(null);
+    if (!isDebugMode) Menu.setApplicationMenu(null);
 
     // Load the .js
     globals.mainMenu.loadFile(path.join(globals.CWD, "main_menu", "index.html"));
@@ -412,6 +414,7 @@ app.whenReady().then(() => {
                 width: 400,
                 height: 500,
 
+                // Will be edited once new main menu gets integrated
                 frame: true,
                 resizable: true,
                 
@@ -549,9 +552,9 @@ ipcMain.handle("loadGame", async (_, gameName) => {
             height: height,
             x: x,
             y: y,
-            frame: false,
-            resizable: false,
-            movable: false,
+            frame: isDebugMode,
+            resizable: isDebugMode,
+            movable: isDebugMode,
             webPreferences: {
                 preload: path.join(globals.CWD, "preload.js"),
             }

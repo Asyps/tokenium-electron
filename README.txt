@@ -24,3 +24,7 @@ npm install electron --save-dev
 To run the project, run this command:
 
 npm start
+
+The project can also be run in debug mode (the windows will not be frameless - this allows the devtools to be accessed) using the command:
+
+npm run start:debug
