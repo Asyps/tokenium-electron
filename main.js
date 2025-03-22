@@ -9,6 +9,8 @@ ipcMain.handle('toggle-devtools', (event) => {
     }
 });
 
+// Remove the menu in all windows
+if (!isDebugMode) Menu.setApplicationMenu(null);
 
 
 // Imports commonjs
@@ -108,7 +110,7 @@ const globals = {
 
     // For these two dictionaries, each key:value pair encodes                    str moduleName : str[] extensionNameList
     availableModules: {},           // List of modules and extensions available
-    selectedModules: {},            // List of modules and extensions selected to be loaded this game
+    selectedModules: {"tokenium": []},            // List of modules and extensions selected to be loaded this game
     
     // Array of moduleNames that finished loading
     loadedModules: [],              
@@ -371,12 +373,17 @@ const fileSystem = {
 
         let filePath = path.join(globals.CWD, "games", globals.gameName, "window_layout.json");
 
-        await fs.writeFile(filePath, JSON.stringify(globals.windowLayout, null, 4), {encoding: "utf8"});
+        try {
+            await fs.writeFile(filePath, JSON.stringify(globals.windowLayout, null, 4), {encoding: "utf8"});
+        } catch {
+            // If the layout saving fails, it's because there is no layout to be saved. Ignore.
+        }
     }
 }
 
 // Build the list of available modules
 fileSystem.buildAvailableModuleList();
+
 
 // Main menu handlers
 ipcMain.handle("getGameList", async () => await fileSystem.getExistingGames());
@@ -386,27 +393,33 @@ ipcMain.handle("getSelectedModules", (_, gameName) => selectedModuleList[gameNam
 
 ipcMain.handle("setSelectedModules", (_, moduleData) => globals.selectedModules = moduleData);
 
-// Main menu
-app.whenReady().then(() => {
+// Functions for opening menus
+function openMainMenu() {
+    try {
+        // Close previous menu
+        globals.currentMenu.close();
+    } catch {
+        // On app startup, there will be no previous menu to close; ignore this error
+    }
+
     // Open the main menu
-    globals.mainMenu = new BrowserWindow({
+    globals.currentMenu = new BrowserWindow({
         // To do - security stuff
         width: 800,
         height: 650,
         x: 25,
         y: 50,
         webPreferences: {
-            preload: path.join(globals.CWD, "main_menu", "preload.js")
+            preload: path.join(globals.CWD, "menus", "preload.js")
         }
     });
 
-    if (!isDebugMode) Menu.setApplicationMenu(null);
-
-    // Load the .js
-    globals.mainMenu.loadFile(path.join(globals.CWD, "main_menu", "index.html"));
-
+    // Load the .html
+    globals.currentMenu.loadFile(path.join(globals.CWD, "menus", "main_menu", "index.html"));
+    
+    /*
     // Handler for the module selector window
-    globals.mainMenu.webContents.setWindowOpenHandler(() => {
+    globals.currentMenu.webContents.setWindowOpenHandler(() => {
         // To do - security stuff
         return {
             action: "allow",
@@ -427,14 +440,51 @@ app.whenReady().then(() => {
             }
         }
     });
-});
+    */
+}
 
-// Load game procedure
-ipcMain.handle("loadGame", async (_, gameName) => {
-    // Set the selected game into global variables
-    globals.gameName = gameName;
+function openPlayerSettingsMenu() {
+    // Close previous menu
+    globals.currentMenu.close();
 
-    
+    // Open the player settings menu
+    globals.currentMenu = new BrowserWindow({
+        // To do - security stuff
+        width: 850,
+        height: 650,
+        x: 25,
+        y: 50,
+        webPreferences: {
+            preload: path.join(globals.CWD, "menus", "preload.js")
+        }
+    });
+
+    // Load the .html
+    globals.currentMenu.loadFile(path.join(globals.CWD, "menus", "player_settings", "index.html"));
+}
+
+function openOwnerSettingsMenu() {
+    // Close main menu
+    globals.currentMenu.close();
+
+    // Open the owner settings menu
+    globals.currentMenu = new BrowserWindow({
+        // To do - security stuff
+        width: 1000,
+        height: 850,
+        x: 25,
+        y: 50,
+        webPreferences: {
+            preload: path.join(globals.CWD, "menus", "preload.js")
+        }
+    });
+
+    // Load the .html
+    globals.currentMenu.loadFile(path.join(globals.CWD, "menus", "owner_settings", "index.html"));
+}
+
+// Function that loads all modules along with extensions
+async function loadGame() {
     // Get the main display width and height
     globals.workAreaSize = screen.getPrimaryDisplay().workAreaSize;
     
@@ -624,9 +674,44 @@ ipcMain.handle("loadGame", async (_, gameName) => {
         });
     }
 
-    // Close main menu
-    globals.mainMenu.close();
-}); 
+    // Close previous menu
+    globals.currentMenu.close();
+}
+
+
+// Handle main menu transfer
+ipcMain.handle("menuTransfer", async (_, action, gameName) => {
+    // If the game is launched or it's settings are being opened, save the gameName and try to connect to the server
+    if (action == "launch" || typeof action == "number") {             //  action == "launch" || action == "settings"    
+        // Set the selected game into global variables
+        if (gameName != undefined) globals.gameName = gameName;
+
+        /*
+            Here, code would attempt to connect to the server if not already connected.
+                        a) launch directly      b) open settings
+            If the server connection is not successfull, display error message and    a) don't close main menu   b) open settings menu in offline mode.
+            If the server connection is successful, then     a) launch the game    b) determine if the user is owner and open the apropriate menu
+        */
+
+        // For now, open the menu determined by the button clicked for debugging reasons
+        if (action == "launch") loadGame(); // == true prevents loading of the game when button number is provided; in finished product, code will pass "false" when opening settings menu.
+        
+        else if (action == 0) {
+            openPlayerSettingsMenu();
+        } else {
+            openOwnerSettingsMenu();
+        }
+    }
+    // The other options won't connect to the server
+    else if (action == "main menu") {
+        openMainMenu();
+    }
+});
+
+// Open the main menu at app start
+app.whenReady().then(openMainMenu);
+
+
 
 // Communication system
 
@@ -709,6 +794,8 @@ ipcMain.handle("moduleLoadEnquiry", (_, moduleName, extensionName) => {
     return [globals.selectedModules[moduleName].includes(extensionName), globals.loadedModules.includes(moduleName)];
 });
 
+
+// Button panel API
 
 // Layout mode
 ipcMain.handle("setLayoutMode", (_, enabled) => {
