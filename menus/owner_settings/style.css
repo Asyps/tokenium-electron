@@ -24,8 +24,6 @@ body {
 h1 {
     font-size: 56px;
     margin-bottom: 40px;
-    color: red; /* Signature color */
-    text-shadow: 2px 2px 4px rgba(255, 0, 0, 0.5);
 }
 
 /* Layout container */
@@ -286,7 +284,6 @@ button:disabled {
     position: absolute;
     width: 5px;
     height: 5px;
-    background-color: rgba(255, 255, 255, 0.5);
     border-radius: 50%;
     opacity: 0;
     animation: floatParticles 5s infinite;

@@ -5,3 +5,6 @@ contextBridge.exposeInMainWorld("getGameList",  async () => await ipcRenderer.in
 
 // Expose a function that transfers to the next menu or starts the game
 contextBridge.exposeInMainWorld("menuTransfer", (action, gameName) => ipcRenderer.invoke("menuTransfer", action, gameName));
+
+// Function that obtains any data the main process wants to provide
+contextBridge.exposeInMainWorld("getData", () => ipcRenderer.invoke("getData"));

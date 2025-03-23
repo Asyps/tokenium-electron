@@ -1,5 +1,22 @@
+(async () => {
+
+// Obtain data from main process
+var [ipAddress, password, gameName, color] = await window.getData();
+
 // Get HTML elements
 var startButton = document.getElementById("start-button");
+var ipField = document.getElementById("server-address");
+var passwordField = document.getElementById("server-password");
+var nameHeader = document.getElementById("game-name");
+ 
+// Format the game name
+nameHeader.innerHTML = gameName;
+nameHeader.style.color = color;
+nameHeader.style.textShadow = "2px 2px 4px " + color + "88"; 
+
+// Insert starting values into fields
+ipField.value = ipAddress;
+passwordField.value = password;
 
 // Assign event listeners to the buttons
 document.getElementById("return-button").addEventListener("click", () => window.menuTransfer("main menu"));
@@ -17,7 +34,10 @@ function createParticles() {
         particle.style.left = `${Math.random() * 100}vw`;
         particle.style.top = `${Math.random() * 100}vh`;
         particle.style.animationDuration = `${3 + Math.random() * 5}s`;
+        particle.style.backgroundColor = color + "88";
     }
 }
 
 createParticles();
+
+})();

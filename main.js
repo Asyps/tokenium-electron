@@ -13,6 +13,7 @@ ipcMain.handle('toggle-devtools', (event) => {
 if (!isDebugMode) Menu.setApplicationMenu(null);
 
 
+
 // Imports commonjs
 /*
 const { app, BrowserWindow, ipcMain, screen } = require('electron');
@@ -110,7 +111,7 @@ const globals = {
 
     // For these two dictionaries, each key:value pair encodes                    str moduleName : str[] extensionNameList
     availableModules: {},           // List of modules and extensions available
-    selectedModules: {"tokenium": []},            // List of modules and extensions selected to be loaded this game
+    selectedModules: {"tokenium": ["rulers"], "button_panel": []},            // List of modules and extensions selected to be loaded this game
     
     // Array of moduleNames that finished loading
     loadedModules: [],              
@@ -447,6 +448,9 @@ function openPlayerSettingsMenu() {
     // Close previous menu
     globals.currentMenu.close();
 
+    // Prepare data for the window            ip:port             password          name         color
+    ipcMain.handleOnce("getData", () => ["192.168.1.1:45321", "Secure password", "Test name", "#00ff00"]);
+
     // Open the player settings menu
     globals.currentMenu = new BrowserWindow({
         // To do - security stuff
@@ -464,6 +468,9 @@ function openPlayerSettingsMenu() {
 }
 
 function openOwnerSettingsMenu() {
+    // Prepare data for the window            ip:port             password          name         color
+    ipcMain.handleOnce("getData", () => ["192.168.1.1:45321", "Secure password", "Test name", "#00ff00"]);
+
     // Close main menu
     globals.currentMenu.close();
 
