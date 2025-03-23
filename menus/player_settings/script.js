@@ -1,26 +1,38 @@
 (async () => {
 
 // Obtain data from main process
-var [ipAddress, password, gameName, color] = await window.getData();
+var data = await window.getData();
 
 // Get HTML elements
 var startButton = document.getElementById("start-button");
 var ipField = document.getElementById("server-address");
 var passwordField = document.getElementById("server-password");
+var saveButton = document.getElementById("save-button");
 var nameHeader = document.getElementById("game-name");
  
 // Format the game name
-nameHeader.innerHTML = gameName;
-nameHeader.style.color = color;
-nameHeader.style.textShadow = "2px 2px 4px " + color + "88"; 
+nameHeader.innerHTML = data.gameName;
+nameHeader.style.color = data.color;
+nameHeader.style.textShadow = "2px 2px 4px " + data.color + "88"; 
 
 // Insert starting values into fields
-ipField.value = ipAddress;
-passwordField.value = password;
+ipField.value = data.ipAddress;
+passwordField.value = data.password;
+
+// Disabling the save button if fields are empty
 
 // Assign event listeners to the buttons
 document.getElementById("return-button").addEventListener("click", () => window.menuTransfer("main menu"));
 startButton.addEventListener("click", () => window.menuTransfer("launch"));
+
+saveButton.addEventListener("click", () => {
+    // Update the data object
+    data.ipAddress = ipField.value;
+    data.password = passwordField.value;
+
+    // Send it to main process
+    window.setGameData(data);
+});
 
 
 
@@ -34,7 +46,7 @@ function createParticles() {
         particle.style.left = `${Math.random() * 100}vw`;
         particle.style.top = `${Math.random() * 100}vh`;
         particle.style.animationDuration = `${3 + Math.random() * 5}s`;
-        particle.style.backgroundColor = color + "88";
+        particle.style.backgroundColor = data.color + "88";
     }
 }
 

@@ -63,7 +63,11 @@ fireglueTest();
 // Close the application when all windows are closed
 app.on("window-all-closed", () => {
     // If a game is chosen, save the window layout
-    if (globals.gameName) fileSystem.saveWindowLayout();
+    if (globals.gameName) {
+        fileSystem.saveWindowLayout();
+        fileSystem.saveGameData();
+    }
+    fileSystem.saveClientData();
     app.quit();
 });
 
@@ -352,7 +356,7 @@ const fileSystem = {
 
     // Reads the window_layout.json file of the selected game and returns the window layout specified within
     async getWindowLayout() {
-        if (!globals.gameName) throw new Error("Tried to run a function dependent on the game name while no game was selected.")
+        if (!globals.gameName) throw new Error("Tried to run a function dependent on the game name while no game was selected.");
 
         let filePath = path.join(globals.CWD, "games", globals.gameName, "window_layout.json");
 
@@ -379,7 +383,63 @@ const fileSystem = {
         } catch {
             // If the layout saving fails, it's because there is no layout to be saved. Ignore.
         }
-    }
+    },
+
+    // Reads client-wide login data
+    async readClientData() {
+        let filePath = path.join(globals.CWD, "client_data", "client_data.json");
+
+        try {
+            // Read, parse and return the data
+            let rawData = await fs.readFile(filePath, {encoding: "utf-8"});
+            return JSON.parse(rawData);
+        }
+        catch {
+            // Return an empty object if the file doesn't exist
+            return {};
+        }
+    },
+
+    // Saves client-wide login data
+    async saveClientData() {
+        let filePath = path.join(globals.CWD, "client_data", "client_data.json");
+
+        try {
+            await fs.writeFile(filePath, JSON.stringify(globals.clientData, null, 4), {encoding: "utf8"});
+        } catch {
+            // If the data write fails, it's because there is no layout to be saved. Ignore.
+        }
+    },
+
+    // Reads data about the currently chosen game
+    async readGameData() {
+        if (!globals.gameName) throw new Error("Tried to run a function dependent on the game name while no game was selected.");
+
+        let filePath = path.join(globals.CWD, "games", globals.gameName, "game_data.json");
+
+        try {
+            // Read, parse and return the data
+            let rawData = await fs.readFile(filePath, {encoding: "utf-8"});
+            return JSON.parse(rawData);
+        }
+        catch {
+            // Return an empty object if the file doesn't exist
+            return {};
+        }
+    },
+
+    // Saves data about the currently chosen game
+    async saveGameData() {
+        if (!globals.gameName) throw new Error("Tried to run a function dependent on the game name while no game was selected.");
+
+        let filePath = path.join(globals.CWD, "games", globals.gameName, "game_data.json");
+
+        try {
+            await fs.writeFile(filePath, JSON.stringify(globals.gameData, null, 4), {encoding: "utf8"});
+        } catch {
+            // If the data write fails, it's because there is no data to be saved. Ignore.
+        }
+    },
 }
 
 // Build the list of available modules
@@ -393,6 +453,8 @@ ipcMain.handle("getRequiredModules", (_, gameName) => requiredModuleList[gameNam
 ipcMain.handle("getSelectedModules", (_, gameName) => selectedModuleList[gameName]);   // Mockup
 
 ipcMain.handle("setSelectedModules", (_, moduleData) => globals.selectedModules = moduleData);
+
+ipcMain.handle("setGameData", (_, gameData) => globals.gameData = gameData);
 
 // Functions for opening menus
 function openMainMenu() {
@@ -448,8 +510,8 @@ function openPlayerSettingsMenu() {
     // Close previous menu
     globals.currentMenu.close();
 
-    // Prepare data for the window            ip:port             password          name         color
-    ipcMain.handleOnce("getData", () => ["192.168.1.1:45321", "Secure password", "Test name", "#00ff00"]);
+    // Prepare data for the window
+    ipcMain.handleOnce("getData", () => globals.gameData);
 
     // Open the player settings menu
     globals.currentMenu = new BrowserWindow({
@@ -468,8 +530,8 @@ function openPlayerSettingsMenu() {
 }
 
 function openOwnerSettingsMenu() {
-    // Prepare data for the window            ip:port             password          name         color
-    ipcMain.handleOnce("getData", () => ["192.168.1.1:45321", "Secure password", "Test name", "#00ff00"]);
+    // Prepare data for the window
+    ipcMain.handleOnce("getData", () => globals.gameData);
 
     // Close main menu
     globals.currentMenu.close();
@@ -688,22 +750,39 @@ async function loadGame() {
 
 // Handle main menu transfer
 ipcMain.handle("menuTransfer", async (_, action, gameName) => {
-    // If the game is launched or it's settings are being opened, save the gameName and try to connect to the server
-    if (action == "launch" || typeof action == "number") {             //  action == "launch" || action == "settings"    
-        // Set the selected game into global variables
-        if (gameName != undefined) globals.gameName = gameName;
+    if (action == "launch" || typeof action == "number") {             //  action == "launch" || action == "settings"
+        // If the game is being switched, save data, disconnect from the server, load new data, connect to new server...
+        // If the argument gameName is undefined, ignore this
+        if (globals.gameName != gameName && gameName != undefined) {
+            // Only save data and disconnect when the previous game wasn't undefined
+            if (globals.gameName != undefined) {
+                // Save the data for the previous game
+                await fileSystem.saveGameData();
 
-        /*
-            Here, code would attempt to connect to the server if not already connected.
-                        a) launch directly      b) open settings
-            If the server connection is not successfull, display error message and    a) don't close main menu   b) open settings menu in offline mode.
-            If the server connection is successful, then     a) launch the game    b) determine if the user is owner and open the apropriate menu
-        */
+                // Here, the code would disconnect from the server.
+            }
+
+            // Set the selected game into global variables
+            globals.gameName = gameName;
+
+            // Load game data
+            globals.gameData = await fileSystem.readGameData();
+
+            /*
+                Here, code would attempt to connect to the server if not already connected.
+                            a) launch directly      b) open settings
+                If the server connection is not successfull, display error message and    a) don't close main menu   b) open settings menu in offline mode.
+                If the server connection is successful, then     a) launch the game    b) determine if the user is owner and open the apropriate menu
+            */
+
+            // Data from server would be compared with local data; name and color from server always replaces local data.
+            // Alternative: If this client is owner of the game, local data replaces server data; don't disable name and color fields when server is offline.
+        }
 
         // For now, open the menu determined by the button clicked for debugging reasons
         if (action == "launch") loadGame(); // == true prevents loading of the game when button number is provided; in finished product, code will pass "false" when opening settings menu.
         
-        else if (action == 0) {
+        else if (action == 0) {     // Which menu should be opened will be determined by data from server.
             openPlayerSettingsMenu();
         } else {
             openOwnerSettingsMenu();
@@ -842,7 +921,13 @@ ipcMain.handle("setLayoutMode", (_, enabled) => {
 
 // API to quit the app
 ipcMain.handle("shutdownGame", (_, restart=false) => {
-    if (globals.gameName) fileSystem.saveWindowLayout();
+    // Save data
+    if (globals.gameName) {
+        fileSystem.saveWindowLayout();
+        fileSystem.saveGameData();
+    }
+    fileSystem.saveClientData();
+
     if (restart) app.relaunch();
     app.quit();
 });

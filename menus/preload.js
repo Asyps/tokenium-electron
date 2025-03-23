@@ -8,3 +8,6 @@ contextBridge.exposeInMainWorld("menuTransfer", (action, gameName) => ipcRendere
 
 // Function that obtains any data the main process wants to provide
 contextBridge.exposeInMainWorld("getData", () => ipcRenderer.invoke("getData"));
+
+// Function that sets  data the main process wants to provide
+contextBridge.exposeInMainWorld("setGameData", (gameData) => ipcRenderer.invoke("setGameData", gameData));
