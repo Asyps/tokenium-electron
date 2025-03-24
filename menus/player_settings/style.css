@@ -251,3 +251,9 @@ button:disabled {
         opacity: 0;
     }
 }
+
+/* Class for invalid entries */
+.error {
+    border: 1px solid rgb(250, 79, 79) !important;
+    background-color: #ffe6e6 !important;
+  }

@@ -1,6 +1,6 @@
 {
-    "ipAddress": "10.10.1.1:40000",
-    "password": "Heslo",
+    "ipAddress": "10.10.10.10:1289",
+    "password": "cisco",
     "gameName": "Desert",
-    "color": "#00ffff"
+    "color": "#03fcfc"
 }

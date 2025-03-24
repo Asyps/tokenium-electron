@@ -1,6 +1,6 @@
 {
-    "ipAddress": "192.168.1.1:40000",
-    "password": "Stronk pass",
+    "ipAddress": "192.168.1.1:12345",
+    "password": "Stronk pas",
     "gameName": "Chat test",
-    "color": "#8676fe"
+    "color": "#64f790"
 }
