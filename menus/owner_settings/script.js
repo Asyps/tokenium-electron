@@ -5,11 +5,13 @@ var data = await window.getData();
 
 // Get HTML elements
 var startButton = document.getElementById("start-button");
+
 var ipField = document.getElementById("server-address");
 var passwordField = document.getElementById("server-password");
 var nameField = document.getElementById("game-name-input");
 var colorField = document.getElementById("signature-color");
 var saveButton = document.getElementById("save-button");
+
 var nameHeader = document.getElementById("game-name");
 
 // Format the game name
@@ -79,6 +81,8 @@ nameField.addEventListener("input", () => {
 // Assign event listeners to the buttons
 document.getElementById("return-button").addEventListener("click", () => window.menuTransfer("main menu"));
 startButton.addEventListener("click", () => window.menuTransfer("launch"));
+document.getElementById("local-modules-button").addEventListener("click", () => window.menuTransfer("select modules"));
+document.getElementById("required-modules-button").addEventListener("click", () => window.menuTransfer("required modules"));
 
 saveButton.addEventListener("click", () => {
     // Update the data object

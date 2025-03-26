@@ -2,12 +2,6 @@
 const isDebugMode = process.argv.includes('--d');
 
 process.traceProcessWarnings = isDebugMode;
-ipcMain.handle('toggle-devtools', (event) => {
-    const window = BrowserWindow.getFocusedWindow();
-    if (window) {
-        window.webContents.toggleDevTools();
-    }
-});
 
 // Remove the menu in all windows
 if (!isDebugMode) Menu.setApplicationMenu(null);
@@ -89,33 +83,17 @@ let requiredModuleList = {
         "calculator": []
     },
 };
-let selectedModuleList = {
-    tokenium_test: {
-        "tokenium": ["rulers"]
-    },
-
-    chat_test: {
-        "chat": ["in_world_chat", "commands"]
-    },
-    full_test: {
-        "chat": ["in_world_chat", "commands"],
-        "tokenium": ["rulers"]
-    },
-    desert: {
-        "tokenium": [],
-        "chat": ["commands", "in_world_chat"],
-        "calculator": []
-    },
-};
 
 // A place to put the main process global variables
 const globals = {
     // Current working difrectory
     CWD: path.resolve(),
 
-    // For these two dictionaries, each key:value pair encodes                    str moduleName : str[] extensionNameList
+    // Dictionary with all the game data
+    gameData: {},
+
+    // For this dictionary, each key:value pair encodes          str moduleName : str[] extensionNameList
     availableModules: {},           // List of modules and extensions available
-    selectedModules: {"tokenium": ["rulers"], "button_panel": []},            // List of modules and extensions selected to be loaded this game
     
     // Array of moduleNames that finished loading
     loadedModules: [],              
@@ -130,7 +108,7 @@ const globals = {
 // Functions for reading/modifying file system contents
 const fileSystem = {
     // Goes through the files and builds a list of all available modules, which is put into globals.availableModules
-    async buildAvailableModuleList() {
+    async getAvailableModules() {
         var dirPath = path.join(globals.CWD, "modules");
 
         // Open the modules directory
@@ -141,6 +119,8 @@ const fileSystem = {
             fs.mkdir(dirPath);
             return;
         } 
+
+        var moduleList = {};
 
         // Iterate over entries
         for await (const moduleDirent of modulesDir) {
@@ -178,13 +158,15 @@ const fileSystem = {
                 }
                 
                 // Add the module to the globals
-                globals.availableModules[moduleName] = extensions;
+                moduleList[moduleName] = extensions;
 
             }
             else {
                 throw new Error("The folder 'modules' should contain only folders.");
             }
         }
+
+        return moduleList;
     },
 
     // Goes through the files and builds a list of existing games, which is returned
@@ -442,28 +424,17 @@ const fileSystem = {
     },
 }
 
-// Build the list of available modules
-fileSystem.buildAvailableModuleList();
 
-
-// Main menu handlers
+// Menu handlers
 ipcMain.handle("getGameList", async () => await fileSystem.getExistingGames());
-ipcMain.handle("getAvailableModules", async () => globals.availableModules);
-ipcMain.handle("getRequiredModules", (_, gameName) => requiredModuleList[gameName]);   // Mockup
-ipcMain.handle("getSelectedModules", (_, gameName) => selectedModuleList[gameName]);   // Mockup
-
-ipcMain.handle("setSelectedModules", (_, moduleData) => globals.selectedModules = moduleData);
-
-ipcMain.handle("setGameData", (_, gameData) => globals.gameData = gameData);
+ipcMain.handle("getAvailableModules", async () => fileSystem.getAvailableModules());
+ipcMain.handle("setGameData", (_, gameData) => globals.gameData.header = gameData);
 
 // Functions for opening menus
 function openMainMenu() {
-    try {
-        // Close previous menu
-        globals.currentMenu.close();
-    } catch {
-        // On app startup, there will be no previous menu to close; ignore this error
-    }
+    // Close previous menu and submenu
+    try { globals.currentMenu.close(); } catch {}
+    try { globals.currentSubMenu.close(); } catch {}
 
     // Open the main menu
     globals.currentMenu = new BrowserWindow({
@@ -507,11 +478,12 @@ function openMainMenu() {
 }
 
 function openPlayerSettingsMenu() {
-    // Close previous menu
-    globals.currentMenu.close();
+    // Close previous menu and submenu
+    try { globals.currentMenu.close(); } catch {}
+    try { globals.currentSubMenu.close(); } catch {}
 
     // Prepare data for the window
-    ipcMain.handleOnce("getData", () => globals.gameData);
+    ipcMain.handleOnce("getData", () => globals.gameData.header);
 
     // Open the player settings menu
     globals.currentMenu = new BrowserWindow({
@@ -530,8 +502,12 @@ function openPlayerSettingsMenu() {
 }
 
 function openOwnerSettingsMenu() {
+    // Close previous menu and submenu
+    try { globals.currentMenu.close(); } catch {}
+    try { globals.currentSubMenu.close(); } catch {}
+
     // Prepare data for the window
-    ipcMain.handleOnce("getData", () => globals.gameData);
+    ipcMain.handleOnce("getData", () => globals.gameData.header);
 
     // Close main menu
     globals.currentMenu.close();
@@ -550,6 +526,78 @@ function openOwnerSettingsMenu() {
 
     // Load the .html
     globals.currentMenu.loadFile(path.join(globals.CWD, "menus", "owner_settings", "index.html"));
+}
+
+function openRequiredSelectorSubMenu() {
+    // Don't close previous menu; do close previous submenu
+    try { globals.currentSubMenu.close(); } catch {}
+
+    // Prepare data for the window
+    ipcMain.handleOnce("getRequiredModules", () => {return {}});
+    ipcMain.handleOnce("getSelectedModules", () => requiredModuleList[globals.gameName]);
+
+    // Prepare handler for the returned data
+    ipcMain.handleOnce("returnModuleList", (_, moduleData) => {requiredModuleList[globals.gameName] = moduleData});
+
+    // Open the player settings menu
+    globals.currentSubMenu = new BrowserWindow({
+        // To do - security stuff
+        width: 400,
+        height: 500,
+        x: 25,
+        y: 50,
+
+        //modal: true,
+        //parent: globals.currentMenu,
+
+        webPreferences: {
+            preload: path.join(globals.CWD, "menus", "module_selector", "preload.js")
+        }
+    });
+
+    // Assign a cleanup handler to remove the handler for the returned data in case it's not used.
+    globals.currentSubMenu.on("close", () => {
+        ipcMain.removeHandler("returnModuleList");
+    });
+
+    // Load the .html
+    globals.currentSubMenu.loadFile(path.join(globals.CWD, "menus", "module_selector", "index.html"));
+}
+
+function openModuleSelectorSubMenu() {
+    // Don't close previous menu; do close previous submenu
+    try { globals.currentSubMenu.close(); } catch {}
+
+    // Prepare data for the window
+    ipcMain.handleOnce("getRequiredModules", () => requiredModuleList[globals.gameName]);
+    ipcMain.handleOnce("getSelectedModules", () => globals.gameData.selectedModules);
+
+    // Prepare handler for the returned data
+    ipcMain.handleOnce("returnModuleList", (_, moduleData) => {globals.gameData.selectedModules = moduleData});
+
+    // Open the player settings menu
+    globals.currentSubMenu = new BrowserWindow({
+        // To do - security stuff
+        width: 400,
+        height: 500,
+        x: 25,
+        y: 50,
+
+        //modal: true,
+        //parent: globals.currentMenu,
+
+        webPreferences: {
+            preload: path.join(globals.CWD, "menus", "module_selector", "preload.js")
+        }
+    });
+
+    // Assign a cleanup handler to remove the handler for the returned data in case it's not used.
+    globals.currentSubMenu.on("close", () => {
+        ipcMain.removeHandler("returnModuleList");
+    });
+
+    // Load the .html
+    globals.currentSubMenu.loadFile(path.join(globals.CWD, "menus", "module_selector", "index.html"));
 }
 
 // Function that loads all modules along with extensions
@@ -642,7 +690,7 @@ async function loadGame() {
     var windowCount = 0;
 
     // For every module needed to be loaded...
-    for (let moduleName in globals.selectedModules) {
+    for (let moduleName of Object.keys(globals.gameData.selectedModules).concat(["button_panel"])) {
         // Get the module window information
         let windowInfo = globals.windowLayout[moduleName];   // The keys of globals.selectedModules represent module names
 
@@ -675,7 +723,7 @@ async function loadGame() {
             resizable: isDebugMode,
             movable: isDebugMode,
             webPreferences: {
-                preload: path.join(globals.CWD, "preload.js"),
+                preload: path.join(globals.CWD, (moduleName == "button_panel") ? "button_panel" : ".", "preload.js"),
             }
         });
         
@@ -683,7 +731,7 @@ async function loadGame() {
         globals.activeWindows[moduleName] = moduleWindow;
 
         // Assign the html file
-        moduleWindow.loadFile(path.join(globals.CWD, "modules", moduleName, "index.html"));
+        moduleWindow.loadFile(path.join(globals.CWD, (moduleName == "button_panel") ? "." : "modules", moduleName, "index.html"));
 
         // Create the event handler for loading the extensions and postprocess script
         moduleWindow.webContents.once("did-finish-load", () => {
@@ -691,8 +739,11 @@ async function loadGame() {
 
             // Run the extension adding functions and collect the promises in extensionLoadPromises
             let extensionLoadPromises = [];
-            for (let extensionName of globals.selectedModules[moduleName]) {     // The values of globals.selectedModules are lists of extension names
-                extensionLoadPromises.push(loadScript(moduleWindow, moduleName, extensionName));    
+
+            if (moduleName != "button_panel") {
+                for (let extensionName of globals.gameData.selectedModules[moduleName]) {     // The values of globals.selectedModules are lists of extension names
+                    extensionLoadPromises.push(loadScript(moduleWindow, moduleName, extensionName));    
+                }
             }
 
             Promise.all(extensionLoadPromises)
@@ -789,9 +840,10 @@ ipcMain.handle("menuTransfer", async (_, action, gameName) => {
         }
     }
     // The other options won't connect to the server
-    else if (action == "main menu") {
-        openMainMenu();
-    }
+    else if (action == "main menu") openMainMenu();
+    else if (action == "select modules") openModuleSelectorSubMenu();
+    else if (action == "required modules") openRequiredSelectorSubMenu();
+    
 });
 
 // Open the main menu at app start
@@ -825,7 +877,7 @@ ipcMain.handle("callFunction", async (_, moduleName, functionName, args, callerN
     }
     else {
         // If the module isn't supposed to be loaded, ignore the call
-        if (globals.selectedModules.hasOwnProperty(moduleName)) {
+        if (globals.gameData.selectedModules.hasOwnProperty(moduleName) || moduleName == "button_panel") {
             try {
                 if (globals.functionsWithReplyValue.includes(moduleName + "-" + functionName)) {
                     // If the function has a return value...
@@ -872,12 +924,12 @@ ipcMain.handle("moduleLoadEnquiry", (_, moduleName, extensionName) => {
     // This function returns two boolean values in the format [shouldSpecifiedThingBeLoaded, isModuleLoaded]
 
     // Check if the module should be loaded
-    let shouldModuleBeLoaded = globals.selectedModules.hasOwnProperty(moduleName);
+    let shouldModuleBeLoaded = globals.gameData.selectedModules.hasOwnProperty(moduleName);
     if (!shouldModuleBeLoaded) return [false, false];       // If it shouldn't be loaded, the awnsers are known
     
     // If the extension is not specified, return the awnser for the module, otherwise return the awnser for an extension
     if (extensionName == undefined) return [shouldModuleBeLoaded, globals.loadedModules.includes(moduleName)];
-    return [globals.selectedModules[moduleName].includes(extensionName), globals.loadedModules.includes(moduleName)];
+    return [globals.gameData.selectedModules[moduleName].includes(extensionName), globals.loadedModules.includes(moduleName)];
 });
 
 

@@ -1,6 +1,15 @@
 {
-    "ipAddress": "192.168.1.1:12345",
-    "password": "Stronk pas",
-    "gameName": "Chat test",
-    "color": "#64f790"
+    "header": {
+        "ipAddress": "192.168.1.1:12345",
+        "password": "Stronk pas",
+        "gameName": "Chat test",
+        "color": "#64f790"
+    },
+    "selectedModules": {
+        "calculator": [],
+        "chat": [
+            "commands",
+            "in_world_chat"
+        ]
+    }
 }

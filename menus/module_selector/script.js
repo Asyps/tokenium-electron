@@ -15,8 +15,8 @@ function toDisplayName(programmingName) {
 async function generateOptions() {
     // Obtain data
     let availableModules = await window.getAvailableModules();
-    let requiredModules = await window.getRequiredModules(window.gameName);
-    let selectedModules = await window.getSelectedModules(window.gameName);
+    let requiredModules = await window.getRequiredModules();
+    let selectedModules = await window.getSelectedModules();
     let checkboxList = document.getElementById("checkbox-list");
 
     // Generating the checklist
@@ -58,7 +58,6 @@ async function generateOptions() {
                 // If the module is selected, check the list. Otherwise the extension is selected only as a result of requirement.
                 let isExtensionSelected = (isSelected) ? selectedModules[moduleName].includes(extensionName) : false;
 
-                console.log(moduleName, extensionName, isExtensionRequired, isExtensionSelected);
 
                 // Create the checkbox
                 let extensionCheckbox = document.createElement("input");
@@ -131,7 +130,7 @@ function confirmSelection() {
     });
 
     // Apply the result
-    window.setSelectedModules(moduleData);
+    window.returnModuleList(moduleData);
 
     // Close self
     window.close();

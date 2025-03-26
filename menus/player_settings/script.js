@@ -4,11 +4,14 @@
 var data = await window.getData();
 
 // Get HTML elements
+var nameHeader = document.getElementById("game-name");
+
 var startButton = document.getElementById("start-button");
+var saveButton = document.getElementById("save-button");
+
 var ipField = document.getElementById("server-address");
 var passwordField = document.getElementById("server-password");
-var saveButton = document.getElementById("save-button");
-var nameHeader = document.getElementById("game-name");
+
 
 // Format the game name
 nameHeader.innerHTML = data.gameName;
@@ -62,6 +65,8 @@ ipField.addEventListener("input", () => {
 // Assign event listeners to the buttons
 document.getElementById("return-button").addEventListener("click", () => window.menuTransfer("main menu"));
 startButton.addEventListener("click", () => window.menuTransfer("launch"));
+document.getElementById("change-modules-button").addEventListener("click", () => window.menuTransfer("select modules"));
+
 
 saveButton.addEventListener("click", () => {
     // Update the data object

@@ -1,6 +1,17 @@
 {
-    "ipAddress": "127.0.0.1:53214",
-    "password": "Sussy",
-    "gameName": "Full test",
-    "color": "#53237b"
+    "header": {
+        "ipAddress": "127.0.0.1:53214",
+        "password": "Sussy",
+        "gameName": "Full test",
+        "color": "#53237b"
+    },
+    "selectedModules": {
+        "chat": [
+            "in_world_chat",
+            "commands"
+        ],
+        "tokenium": [
+            "rulers"
+        ]
+    }
 }

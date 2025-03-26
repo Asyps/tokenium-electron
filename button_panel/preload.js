@@ -152,3 +152,16 @@ ipcRenderer.on("setDragAreaMode", (_, enable) => {
     }
     // Otherwise do nothing
 });
+
+
+// Exclusive API
+
+// API for turning the program off
+contextBridge.exposeInMainWorld("shutdown", (restart) => {
+    ipcRenderer.invoke("shutdownGame", restart);
+});
+
+// API for controlling layout mode
+contextBridge.exposeInMainWorld("setLayoutMode", (bool) => {
+    ipcRenderer.invoke("setLayoutMode", bool);
+});

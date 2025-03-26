@@ -86,6 +86,7 @@ function toggleLayoutMode() {
 
 // API for adding buttons
 window.defineAPI("registerSystemButton", function (callbackName, iconPath) {
+    console.log(callbackName, iconPath)
     // Create the button
     let button = document.createElement("button");
 
@@ -99,7 +100,7 @@ window.defineAPI("registerSystemButton", function (callbackName, iconPath) {
     let img = document.createElement("img");
 
     // Assign the src
-    img.src = "../" + arguments[2] + "/" + iconPath;
+    img.src = "../modules/" + arguments[2] + "/" + iconPath;
 
     // Assemble the button and add it to DOM
     button.appendChild(img);

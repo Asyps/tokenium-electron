@@ -1,6 +1,13 @@
 {
-    "ipAddress": "123.45.6.78:1111",
-    "password": "stepan",
-    "gameName": "Tokenium test",
-    "color": "#000000"
+    "header": {
+        "ipAddress": "123.45.6.78:1111",
+        "password": "stepan",
+        "gameName": "Tokenium test",
+        "color": "#000000"
+    },
+    "selectedModules": {
+        "tokenium": [
+            "rulers"
+        ]
+    }
 }

@@ -1,6 +1,13 @@
 {
-    "ipAddress": "10.10.10.10:1289",
-    "password": "cisco",
-    "gameName": "Desert",
-    "color": "#03fcfc"
+    "header": {
+        "ipAddress": "10.10.10.10:1289",
+        "password": "cisco",
+        "gameName": "Desert",
+        "color": "#03fcfc"
+    },
+    "selectedModules": {
+        "tokenium": [],
+        "chat": ["commands", "in_world_chat"],
+        "calculator": []
+    }
 }
