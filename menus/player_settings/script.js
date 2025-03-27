@@ -2,6 +2,12 @@
 
 // Obtain data from main process
 var data = await window.getData();
+if (Object.keys(data).length == 0) {
+    data.ipAddress = "";
+    data.password = "";
+    data.gameName = "";
+    data.color = "";
+}
 
 // Get HTML elements
 var nameHeader = document.getElementById("game-name");

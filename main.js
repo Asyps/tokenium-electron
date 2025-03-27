@@ -82,6 +82,7 @@ let requiredModuleList = {
         "chat": ["commands"],
         "calculator": []
     },
+    chess: {},
 };
 
 // A place to put the main process global variables
@@ -534,10 +535,10 @@ function openRequiredSelectorSubMenu() {
 
     // Prepare data for the window
     ipcMain.handleOnce("getRequiredModules", () => {return {}});
-    ipcMain.handleOnce("getSelectedModules", () => requiredModuleList[globals.gameName]);
+    ipcMain.handleOnce("getSelectedModules", () => globals.gameData.requiredModules);
 
     // Prepare handler for the returned data
-    ipcMain.handleOnce("returnModuleList", (_, moduleData) => {requiredModuleList[globals.gameName] = moduleData});
+    ipcMain.handleOnce("returnModuleList", (_, moduleData) => {globals.gameData.requiredModules = moduleData});
 
     // Open the player settings menu
     globals.currentSubMenu = new BrowserWindow({
@@ -569,7 +570,7 @@ function openModuleSelectorSubMenu() {
     try { globals.currentSubMenu.close(); } catch {}
 
     // Prepare data for the window
-    ipcMain.handleOnce("getRequiredModules", () => requiredModuleList[globals.gameName]);
+    ipcMain.handleOnce("getRequiredModules", () => globals.gameData.requiredModules);
     ipcMain.handleOnce("getSelectedModules", () => globals.gameData.selectedModules);
 
     // Prepare handler for the returned data
@@ -622,19 +623,13 @@ async function loadGame() {
                 "width": 0.5006510416666666,
                 "height": 0.6299019607843137
             },
-            "comms_test_receiver_1": {
-                "height": 0.2,
-                "width": 0.125,
-                "x": 0.875,
-                "y": 0
-            },
             "chat": {
                 "x": 0.7838541666666666,
                 "y": 0.18627450980392157,
                 "width": 0.21614583333333334,
                 "height": 0.8137254901960784
             },
-            "window_layout_test": {
+            "button_panel": {
                 "x": 0.7838541666666666,
                 "y": 0,
                 "width": 0.21614583333333334,
@@ -818,6 +813,11 @@ ipcMain.handle("menuTransfer", async (_, action, gameName) => {
 
             // Load game data
             globals.gameData = await fileSystem.readGameData();
+            if (Object.keys(globals.gameData).length == 0) {
+                globals.gameData.header = {};
+                globals.gameData.selectedModules = {};
+                globals.gameData.requiredModules = {};
+            }
 
             /*
                 Here, code would attempt to connect to the server if not already connected.
@@ -924,7 +924,7 @@ ipcMain.handle("moduleLoadEnquiry", (_, moduleName, extensionName) => {
     // This function returns two boolean values in the format [shouldSpecifiedThingBeLoaded, isModuleLoaded]
 
     // Check if the module should be loaded
-    let shouldModuleBeLoaded = globals.gameData.selectedModules.hasOwnProperty(moduleName);
+    let shouldModuleBeLoaded = globals.gameData.selectedModules.hasOwnProperty(moduleName) || moduleName == "button_panel";
     if (!shouldModuleBeLoaded) return [false, false];       // If it shouldn't be loaded, the awnsers are known
     
     // If the extension is not specified, return the awnser for the module, otherwise return the awnser for an extension

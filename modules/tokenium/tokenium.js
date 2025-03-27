@@ -30,14 +30,14 @@ const playerColor = "#00FFFF";
 // Document mockup
 tokeniumData = {
     // Tokenium size in px
-    width: 768,
+    width: 960,
     height: 640,
     gridSize: 64,
 
     backgroundImage: {
-        path: "../../games/desert/assets/cave.png",
-        width: 896,
-        height: 704
+        path: "../../games/chess/assets/chessboard.jpg",
+        width: 960,
+        height: 640
     },
 
     tokens: [

@@ -2,6 +2,14 @@
 
 // Obtain data from main process
 var data = await window.getData();
+if (Object.keys(data).length == 0) {
+    data = {
+        ipAddress: "",
+        password: "",
+        gameName: "",
+        color: ""
+    }
+}
 
 // Get HTML elements
 var startButton = document.getElementById("start-button");

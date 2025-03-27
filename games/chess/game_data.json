@@ -1,0 +1,15 @@
+{
+    "header": {
+        "ipAddress": "192.168.1.1:1234",
+        "password": "heslo",
+        "gameName": "Chess",
+        "color": "#da8b01"
+    },
+    "selectedModules": {
+        "chat": [],
+        "tokenium": []
+    },
+    "requiredModules": {
+        "tokenium": []
+    }
+}

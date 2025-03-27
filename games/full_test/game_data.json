@@ -7,8 +7,17 @@
     },
     "selectedModules": {
         "chat": [
-            "in_world_chat",
-            "commands"
+            "commands",
+            "in_world_chat"
+        ],
+        "tokenium": [
+            "rulers"
+        ]
+    },
+    "requiredModules": {
+        "chat": [
+            "commands",
+            "in_world_chat"
         ],
         "tokenium": [
             "rulers"

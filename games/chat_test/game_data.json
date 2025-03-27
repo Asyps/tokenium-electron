@@ -11,5 +11,8 @@
             "commands",
             "in_world_chat"
         ]
+    },
+    "requiredModules": {
+        "chat": []
     }
 }
