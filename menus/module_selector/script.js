@@ -25,8 +25,6 @@ async function generateOptions() {
         let isRequired = requiredModules.hasOwnProperty(moduleName);
         let isSelected = selectedModules.hasOwnProperty(moduleName);   // By default
 
-        console.log(moduleName, isRequired, isSelected);
-
         // Module option div
         let moduleDiv = document.createElement("div");
         moduleDiv.setAttribute("class", "main-option-group");
