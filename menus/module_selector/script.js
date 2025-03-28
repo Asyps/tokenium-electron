@@ -66,7 +66,7 @@ async function generateOptions() {
                 extensionCheckbox.id = moduleName + ":" + extensionName;
                 
                 // If the extension is required, disable the option to change it. It is checked in this case.
-                extensionCheckbox.disabled = isExtensionRequired || !isSelected;  
+                extensionCheckbox.disabled = isExtensionRequired || (!isSelected && !isRequired);  
                 extensionCheckbox.checked = isExtensionRequired || isExtensionSelected;
 
                 extensionDiv.appendChild(extensionCheckbox);

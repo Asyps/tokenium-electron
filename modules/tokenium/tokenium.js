@@ -482,7 +482,7 @@ window.defineAPI("system-button-resize-grid", () => {
     window.callFunction("tokenium", "tokeniumGridSize", 32);
 });
 
-//window.defineAPI("registerSystemButton", (callbackName, iconPath) => {
+// window.defineAPI("registerSystemButton", (callbackName, iconPath) => {
 
 // Register the button
 window.callFunctionOnLoaded("button_panel", "registerSystemButton", "resize-grid", "test_icon/Dave.png");

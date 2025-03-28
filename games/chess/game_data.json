@@ -5,10 +5,7 @@
         "gameName": "Chess",
         "color": "#da8b01"
     },
-    "selectedModules": {
-        "chat": [],
-        "tokenium": []
-    },
+    "selectedModules": {},
     "requiredModules": {
         "tokenium": []
     }
