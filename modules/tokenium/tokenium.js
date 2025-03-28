@@ -24,6 +24,18 @@ function grid(number) {
 var imgDict = {
     "Dave": "../../games/desert/assets/Dave.png",
     "Fred": "../../profile_pics/placeholder_1.png",
+    "Black rook": "../../games/chess/assets/black_rook.png",
+    "Black knight": "../../games/chess/assets/black_knight.png",
+    "Black bishop": "../../games/chess/assets/black_bishop.png",
+    "Black pawn": "../../games/chess/assets/black_pawn.png",
+    "Black king": "../../games/chess/assets/black_king.png",
+    "Black queen": "../../games/chess/assets/black_queen.png",
+    "White rook": "../../games/chess/assets/white_rook.png",
+    "White knight": "../../games/chess/assets/white_knight.png",
+    "White bishop": "../../games/chess/assets/white_bishop.png",
+    "White pawn": "../../games/chess/assets/white_pawn.png",
+    "White king": "../../games/chess/assets/white_king.png",
+    "White queen": "../../games/chess/assets/white_queen.png",
 }
 const playerColor = "#00FFFF";
 
@@ -298,6 +310,14 @@ const tokenium = {
             this.container.appendChild(visualToken);
         },
 
+        moveToken(name, x, y) {
+            let visual = document.getElementById(name + " drag");
+            let drag = document.getElementById(name + " visual");
+
+            visual.style.left = drag.style.left = px(x);
+            visual.style.top = drag.style.top = px(y);
+        },
+
         // Deletes the token with the given name
         removeToken(name) {
             if (this.tokenNameList.includes(name)) { 
@@ -485,4 +505,4 @@ window.defineAPI("system-button-resize-grid", () => {
 // window.defineAPI("registerSystemButton", (callbackName, iconPath) => {
 
 // Register the button
-window.callFunctionOnLoaded("button_panel", "registerSystemButton", "resize-grid", "test_icon/Dave.png");
+window.callFunctionOnLoaded("button_panel", "registerSystemButton", "resize-grid", "button_icons/Dave.png");

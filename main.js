@@ -6,8 +6,6 @@ process.traceProcessWarnings = isDebugMode;
 // Remove the menu in all windows
 if (!isDebugMode) Menu.setApplicationMenu(null);
 
-
-
 // Imports commonjs
 /*
 const { app, BrowserWindow, ipcMain, screen } = require('electron');
@@ -430,6 +428,9 @@ const fileSystem = {
 ipcMain.handle("getGameList", async () => await fileSystem.getExistingGames());
 ipcMain.handle("getAvailableModules", async () => fileSystem.getAvailableModules());
 ipcMain.handle("setGameData", (_, gameData) => globals.gameData.header = gameData);
+
+ipcMain.handle("obtainGameName", () => globals.gameData.header.gameName);
+ipcMain.handle("obtainGameColor", () => globals.gameData.header.color);
 
 // Functions for opening menus
 function openMainMenu() {

@@ -1,7 +1,14 @@
 const { ipcRenderer, contextBridge } = require("electron");
 
+
 // Invoke the request to obtain module name
 (async () => window.moduleName = await ipcRenderer.invoke("obtainName"))();
+
+// Invoke the request to obtain game name
+contextBridge.exposeInMainWorld("gameName", ipcRenderer.invoke("obtainGameName"));
+
+// Invoke the request to obtain game color
+contextBridge.exposeInMainWorld("gameColor", ipcRenderer.invoke("obtainGameColor"));
 
 // A helper function for resolving the moduleExtensionPair arguments
 function processArgument(moduleExtensionPair) {

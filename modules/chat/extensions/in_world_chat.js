@@ -213,8 +213,6 @@ for (i of inWorldChatDocumentMockup.chatMessages) {
 inWorldChat.internal.anchor.scrollIntoView({ behavior: 'smooth' });
 
 // test
-inWorldChat.addCharacter("character1");
-inWorldChat.addCharacter("character2");
 inWorldChat.addCharacter("Fred");
 inWorldChat.addCharacter("Bertha");
 

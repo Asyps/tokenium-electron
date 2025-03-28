@@ -11,9 +11,13 @@ let pfpDictionary = {
     "Dave": "../../profile_pics/Dave.png",
     "Fred": "../../profile_pics/placeholder_1.png",
     "Anna": "../../profile_pics/placeholder_2.png",
-    "Steve": "../../profile_pics/placeholder_3.png"
+    "Steve": "../../profile_pics/placeholder_3.png",
+    "Greg": "../../profile_pics/placeholder_3.png",
+    "Bob": "../../profile_pics/placeholder_1.png",
+    "Alice": "../../profile_pics/placeholder_2.png",
+    "Bertha": "../../profile_pics/placeholder_3.png",
 }
-let localPlayerName = "Dave"
+let localPlayerName = "Dave";
 
 // Mockup of the chat synchronised document - contains the data for the chat that will be synchronised between all players
 const chatDocumentMockup = {

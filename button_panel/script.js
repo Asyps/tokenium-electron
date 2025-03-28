@@ -1,5 +1,11 @@
 /* Assistance by Claude.ai */
 
+// Set the game name and background color
+(async () => {
+    document.getElementById("gameNameDiv").innerHTML = await window.gameName;
+    document.body.style.backgroundColor = await window.gameColor;
+})();
+
 // Recalculates the buttons
 function recalculateButtons() {   
     // Button size range
@@ -38,7 +44,7 @@ function recalculateButtons() {
     let finalSize = Math.floor(min * 0.98); // 2% reduction for safety
 
     // Calculate title size based on button size
-    const gameNameElem = document.getElementById("gameName");
+    const gameNameElem = document.getElementById("gameNameDiv");
     gameNameElem.style.fontSize = `${Math.floor(finalSize * 0.6)}px`;
     gameNameElem.style.height = `${finalSize}px`; // Same height as a button row
     gameNameElem.style.lineHeight = `${finalSize}px`; // Center text vertically
@@ -86,7 +92,6 @@ function toggleLayoutMode() {
 
 // API for adding buttons
 window.defineAPI("registerSystemButton", function (callbackName, iconPath) {
-    console.log(callbackName, iconPath)
     // Create the button
     let button = document.createElement("button");
 
@@ -109,3 +114,5 @@ window.defineAPI("registerSystemButton", function (callbackName, iconPath) {
     // Recalculate the button layout
     recalculateButtons();
 }, false, true);
+
+recalculateButtons();

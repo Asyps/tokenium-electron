@@ -6,11 +6,11 @@
         "color": "#64f790"
     },
     "selectedModules": {
-        "calculator": [],
         "chat": [
             "commands",
             "in_world_chat"
-        ]
+        ],
+        "tab-test": []
     },
     "requiredModules": {
         "chat": []
