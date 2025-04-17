@@ -293,7 +293,7 @@ const fileSystem = {
             await fs.writeFile(assetPath, data);
         }
         catch {
-            // If it fails, create the dir and try again
+            // If it fails, create the asset directory and try again
             await fs.mkdir(path.dirname(assetPath), {recursive: true});
             await fs.writeFile(assetPath, data);
         }
