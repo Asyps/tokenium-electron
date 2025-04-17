@@ -336,6 +336,8 @@ tokenium.panZoomHandler.container.addEventListener("wheel", (ev) => {
         tokenium.panZoomHandler.Z *= 0.9 ** Math.sign(ev.deltaY);
     }
 
+    window.callFunction("button_panel", "toggleLayoutMode");
+
     // Apply the change
     tokenium.panZoomHandler.applyTransform();
 });

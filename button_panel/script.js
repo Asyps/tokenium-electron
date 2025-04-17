@@ -115,4 +115,9 @@ window.defineAPI("registerSystemButton", function (callbackName, iconPath) {
     recalculateButtons();
 }, false, true);
 
+// API for other modules to use the system functions
+window.defineAPI("shutdown", () => window.shutdown(false));
+window.defineAPI("restart", () => window.shutdown(true));
+window.defineAPI("toggleLayoutMode", toggleLayoutMode);
+
 recalculateButtons();
