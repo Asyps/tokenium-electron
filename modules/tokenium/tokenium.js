@@ -336,8 +336,6 @@ tokenium.panZoomHandler.container.addEventListener("wheel", (ev) => {
         tokenium.panZoomHandler.Z *= 0.9 ** Math.sign(ev.deltaY);
     }
 
-    window.callFunction("button_panel", "toggleLayoutMode");
-
     // Apply the change
     tokenium.panZoomHandler.applyTransform();
 });
@@ -503,8 +501,6 @@ defineCommannds() // Only run the function if user has permission for altering t
 window.defineAPI("system-button-resize-grid", () => {
     window.callFunction("tokenium", "tokeniumGridSize", 32);
 });
-
-// window.defineAPI("registerSystemButton", (callbackName, iconPath) => {
 
 // Register the button
 window.callFunctionOnLoaded("button_panel", "registerSystemButton", "resize-grid", "button_icons/Dave.png");
