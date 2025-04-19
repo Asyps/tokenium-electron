@@ -61,7 +61,7 @@ tokenium.ruler = {
         this.canvas.setAttribute("width", width);
         this.canvas.setAttribute("height", height);
 
-        // Redraw the grid
+        // Redraw the layer
         this.redraw();
     },
 
@@ -207,7 +207,6 @@ tokenium.panZoomHandler.container.addEventListener("mousedown", (ev) => {
         }
     }
 });
-
 tokenium.panZoomHandler.container.addEventListener("mousemove", (ev) => {
     // If mouse is moved while status is ready, measuring can begin
     if (tokenium.ruler.measureStatus == "ready") {
