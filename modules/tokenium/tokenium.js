@@ -47,7 +47,7 @@ tokeniumData = {
     gridSize: 64,
 
     backgroundImage: {
-        path: "../../games/chess/assets/chessboard.jpg",
+        path: "../../games/desert/assets/cave.png",
         width: 960,
         height: 640
     },

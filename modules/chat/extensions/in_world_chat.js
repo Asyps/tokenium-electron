@@ -64,14 +64,15 @@ function openTab(tabId) {
 // Mockup of the chat synchronised document - contains the data for the chat that will be synchronised between all players
 const inWorldChatDocumentMockup = {
     chatMessages: [
-        new chatComponent("system", "Chat exists!"),
+        new chatComponent("system", "In world chat exists!"),
         new chatComponent("header", "Greg"),
         new chatComponent("message", "Hi guys!"),
         new chatComponent("header", "Bob"),
         new chatComponent("message", "Hello Gregerick!"),
         new chatComponent("header", "Alice"),
         new chatComponent("message", "Ah this guy again."),
-        new chatComponent("system", "Chat shuts up!"),
+        new chatComponent("system", "Insert funny message!"),
+        new chatComponent("system", "Why is no one laughing?"),
     ],
     lastMessageSender: "",
 }

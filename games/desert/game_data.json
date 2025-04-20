@@ -6,12 +6,11 @@
         "color": "#03fcfc"
     },
     "selectedModules": {
-        "tokenium": [],
+        "calculator": [],
         "chat": [
-            "commands",
-            "in_world_chat"
+            "commands"
         ],
-        "calculator": []
+        "tokenium": []
     },
     "requiredModules": {
         "calculator": [],
