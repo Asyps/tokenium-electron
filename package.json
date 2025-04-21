@@ -10,7 +10,7 @@
         "start:debug": "electron . --d"
     },
     "devDependencies": {
-        "electron": "^32.1.2"
+        "electron": "^32.3.3"
     },
     "type": "module"
 }

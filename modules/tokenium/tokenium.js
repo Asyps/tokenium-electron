@@ -42,14 +42,14 @@ const playerColor = "#00FFFF";
 // Document mockup
 tokeniumData = {
     // Tokenium size in px
-    width: 960,
-    height: 640,
+    width: 1367,
+    height: 2000,
     gridSize: 64,
 
     backgroundImage: {
-        path: "../../games/desert/assets/cave.png",
-        width: 960,
-        height: 640
+        path: "../../games/desert/assets/cartoon-snow-ground.jpg",
+        width: 1367,
+        height: 2000
     },
 
     tokens: [
