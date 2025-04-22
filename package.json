@@ -1,7 +1,7 @@
 {
-    "name": "my-electron-app",
-    "version": "1.0.0",
-    "description": "Hello World!",
+    "name": "tokenium",
+    "version": "0.1",
+    "description": "Maturitní práce.",
     "main": "main.js",
     "author": "Artur Balák",
     "license": "MIT",
