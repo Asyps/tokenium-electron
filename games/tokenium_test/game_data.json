@@ -3,7 +3,7 @@
         "ipAddress": "123.45.6.78:1111",
         "password": "stepan",
         "gameName": "Tokenium test",
-        "color": "#006110"
+        "color": "#80ff95"
     },
     "selectedModules": {
         "tokenium": [

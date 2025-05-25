@@ -65,14 +65,19 @@ function openTab(tabId) {
 const inWorldChatDocumentMockup = {
     chatMessages: [
         new chatComponent("system", "In world chat exists!"),
-        new chatComponent("header", "Greg"),
-        new chatComponent("message", "Hi guys!"),
-        new chatComponent("header", "Bob"),
-        new chatComponent("message", "Hello Gregerick!"),
-        new chatComponent("header", "Alice"),
-        new chatComponent("message", "Ah this guy again."),
-        new chatComponent("system", "Insert funny message!"),
-        new chatComponent("system", "Why is no one laughing?"),
+        new chatComponent("header", "Martha"),
+        new chatComponent("message", "Kdy-už-tam-bu-dem!"),
+        new chatComponent("header", "Dave"),
+        new chatComponent("message", "Proboha nezačínej s tím, Martho."),
+
+        new chatComponent("system", "Objevili se vlci."),
+
+        new chatComponent("header", "Martha"),
+        new chatComponent("message", "A-a-a-le ne-e-e! V-v-vl-ci!"),
+        new chatComponent("header", "Dave"),
+        new chatComponent("message", "Klid, jen klid. Aven to zvládne. Ž-že, Avene? Avene!"),
+
+        new chatComponent("system", "Souboj zahájen.")
     ],
     lastMessageSender: "",
 }

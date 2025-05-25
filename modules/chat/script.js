@@ -16,6 +16,7 @@ let pfpDictionary = {
     "Bob": "../../profile_pics/placeholder_1.png",
     "Alice": "../../profile_pics/placeholder_2.png",
     "Bertha": "../../profile_pics/placeholder_3.png",
+    "Martha": "../../games/desert/assets/robot.png"
 }
 let localPlayerName = "Dave";
 

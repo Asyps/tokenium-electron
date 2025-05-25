@@ -23,7 +23,13 @@ function grid(number) {
 // Temporary stuff (will later be managed by other front end systems like character manager)
 var imgDict = {
     "Dave": "../../games/desert/assets/Dave.png",
+    "Aven": "../../games/desert/assets/Aven.png",
+    "Robot": "../../games/desert/assets/robot.png",
+    "Wolf": "../../games/desert/assets/wolf.png",
+    "Bear": "../../games/desert/assets/bear.png",
+
     "Fred": "../../profile_pics/placeholder_1.png",
+    
     "Black rook": "../../games/chess/assets/black_rook.png",
     "Black knight": "../../games/chess/assets/black_knight.png",
     "Black bishop": "../../games/chess/assets/black_bishop.png",
@@ -55,16 +61,46 @@ tokeniumData = {
     tokens: [
         {
             name: "Dave",
-            position: { x: 192, y: 192 },
+            position: { x: 576, y: 704 },
             width: 64,
             height: 64
         },
         {
-            name: "Fred",
-            position: { x: 512, y: 384 },
+            name: "Aven",
+            position: { x: 704, y: 640 },
             width: 64,
             height: 64
-        }
+        },
+        {
+            name: "Robot",
+            position: { x: 832, y: 704 },
+            width: 64,
+            height: 64
+        },
+        {
+            name: "Wolf",
+            position: { x: 512, y: 704 },
+            width: 64,
+            height: 64
+        },
+        {
+            name: "Wolf",
+            position: { x: 640, y: 1088 },
+            width: 64,
+            height: 64
+        },
+        {
+            name: "Wolf",
+            position: { x: 930, y: 940 },
+            width: 64,
+            height: 64
+        },
+        {
+            name: "Bear",
+            position: { x: 64, y: 960 },
+            width: 64,
+            height: 64
+        },
     ]
 }
 
@@ -75,7 +111,7 @@ const tokenium = {
         for (i in tokenium) if (i != "initTokenium") tokenium[i].resize(tokeniumData.width, tokeniumData.height);
 
         // Add the background image
-        this.background.addBackgroundImage(tokeniumData.backgroundImage.path, tokeniumData.backgroundImage.width, tokeniumData.backgroundImage.height);
+        this.background.addBackgroundImage(tokeniumData.backgroundImage.path, tokeniumData.backgroundImage.width, tokeniumData.backgroundImage.height, tokeniumData.backgroundImage.x, tokeniumData.backgroundImage.y);
 
         // Add the tokens
         for (i of tokeniumData.tokens) {
@@ -207,8 +243,10 @@ const tokenium = {
             img.width = width;
             img.style.left = px(positionX);
             img.style.top = px(positionY);
+            img.style.position = "absolute";
             
             this.container.appendChild(img);
+            return img;
         }
     },
 

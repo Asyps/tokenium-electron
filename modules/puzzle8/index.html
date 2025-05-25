@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3x3 Grid</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #f9f9f9;
+            font-family: Arial, sans-serif;
+        }
+
+        .mainGrid {
+            display: grid;
+            grid-template-columns: repeat(4, 256px);
+            grid-template-rows: repeat(2, 192px);
+            gap: 18px;
+            margin-bottom: 8px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(3, 64px);
+            grid-template-rows: repeat(3, 64px);
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .cell {
+            width: 64px;
+            height: 64px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #0eeedf;
+            border: 1px solid #3e10e4;
+            font-size: 24px;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .formElement {
+            margin-top: 8px;
+        }
+
+        .moveList {
+            border: 1px black;
+            background-color: burlywood;
+            height: 200px;
+            width: 200px;
+            overflow: scroll;
+        }
+
+        .move  {
+            margin: 6px;
+            text-align: center;
+            background-color: antiquewhite;
+        }
+
+        .error {
+            border: red;
+            background-color: crimson;
+        }
+
+        .button {
+            height: 40px;
+            width: 100px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="mainGrid">
+        <span style="position: relative;">
+            <div class="grid">
+                <div class="cell" id="start-cell-0"></div>
+                <div class="cell" id="start-cell-1"></div>
+                <div class="cell" id="start-cell-2"></div>
+                <div class="cell" id="start-cell-3"></div>
+                <div class="cell" id="start-cell-4"></div>
+                <div class="cell" id="start-cell-5"></div>
+                <div class="cell" id="start-cell-6"></div>
+                <div class="cell" id="start-cell-7"></div>
+                <div class="cell" id="start-cell-8"></div>
+            </div>
+        </span>
+        <span style="position: relative;">
+            <div class="grid">
+                <div class="cell" id="end-cell-0"></div>
+                <div class="cell" id="end-cell-1"></div>
+                <div class="cell" id="end-cell-2"></div>
+                <div class="cell" id="end-cell-3"></div>
+                <div class="cell" id="end-cell-4"></div>
+                <div class="cell" id="end-cell-5"></div>
+                <div class="cell" id="end-cell-6"></div>
+                <div class="cell" id="end-cell-7"></div>
+                <div class="cell" id="end-cell-8"></div>
+            </div>
+        </span>
+        <span style="position: relative;">
+            <div id="moveLog" class="moveList">
+            </div>
+        </span>
+        <span style="position: relative;">
+            <div class="grid">
+                <div class="cell" id="cell-0"></div>
+                <div class="cell" id="cell-1"></div>
+                <div class="cell" id="cell-2"></div>
+                <div class="cell" id="cell-3"></div>
+                <div class="cell" id="cell-4"></div>
+                <div class="cell" id="cell-5"></div>
+                <div class="cell" id="cell-6"></div>
+                <div class="cell" id="cell-7"></div>
+                <div class="cell" id="cell-8"></div>
+            </div>
+        </span>
+        <div class="formElement">
+            <label for="start-field">Starting position</label>
+            <input type="text" id="start-field"></input>
+        </div>
+        <div class="formElement">
+            <label for="end-field">Ending position</label>
+            <input type="text" id="end-field"></input>
+        </div>
+        <div class="formElement">
+            <input type="button" class="button" id="solve-button" value="Solve"></input>
+        </div>
+        <div>
+            <input type="button" class="button" id="previous-button" value="Previous"></input>
+            <input type="button" class="button" id="next-button" value="Next"></input>
+        </div>
+        <script src="html_functionality.js"></script>
+        <script src="script.js"></script>
+    <div id="move--1"></div>
+    </div>
+</body>
+
+</html>

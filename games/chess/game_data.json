@@ -12,6 +12,8 @@
         ]
     },
     "requiredModules": {
-        "tokenium": []
+        "tokenium": [
+            "chess"
+        ]
     }
 }

@@ -3,14 +3,17 @@
         "ipAddress": "10.10.10.10:1289",
         "password": "cisco",
         "gameName": "Desert",
-        "color": "#03fcfc"
+        "color": "#07d5d5"
     },
     "selectedModules": {
         "calculator": [],
         "chat": [
-            "commands"
+            "commands",
+            "in_world_chat"
         ],
-        "tokenium": []
+        "tokenium": [
+            "rulers"
+        ]
     },
     "requiredModules": {
         "calculator": [],

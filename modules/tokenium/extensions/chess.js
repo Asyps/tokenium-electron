@@ -43,12 +43,19 @@ tokeniumData = {
 
     backgroundImage: {
         path: "../../games/chess/assets/chessboard.jpg",
-        width: 960,
-        height: 640
+        width: 544,
+        height: 544,
+        x: 176,
+        y: 48
     },
 
     tokens: tokens,
 }
+
+// Chess board
+tokenium.background.addBackgroundImage("../../games/chess/assets/wooden_table.jpg", 960, 640);
+
+
 
 // Reseting function
 function reset() {
