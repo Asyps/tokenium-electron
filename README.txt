@@ -1,6 +1,6 @@
 About the project:
 
-Tokenium is a tool for players to make and play table top games. The project is my practical thesis (maturitnní práce).
+Tokenium is a tool for players to make and play tabletop games. The project was my practical thesis (maturitní práce) for my highschool.
 Full details about the project are in the text of the practical thesis.
 
 
